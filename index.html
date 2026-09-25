@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html lang="th">
 <head>
@@ -184,6 +185,21 @@ input {
     line-height: 1.8;
 }
 
+.login-box {
+    text-align: center;
+    margin-bottom: 15px;
+}
+
+.user-info {
+    text-align: center;
+    margin-bottom: 10px;
+    font-size: 14px;
+}
+
+#app {
+    display: none;
+}
+
 @media(max-width:600px) {
 
     .container {
@@ -219,6 +235,22 @@ input {
 <body>
 
 <div class="container">
+
+<div class="login-box">
+
+    <button id="loginBtn">
+        🔐 เข้าสู่ระบบด้วย Google
+    </button>
+
+    <button id="logoutBtn" style="display:none;">
+        ออกจากระบบ
+    </button>
+
+</div>
+
+<div id="userInfo" class="user-info"></div>
+
+<div id="app">
 
 <h1>📅 ปฏิทินวันทำงาน</h1>
 
@@ -333,7 +365,7 @@ OT
 <span id="insuranceRemainingDisplay">0</span> บาท
 <br>
 
-已จ่ายแล้ว:
+จ่ายแล้ว:
 <span id="insurancePeriodDisplay">0</span> รอบ
 
 </div>
@@ -364,7 +396,6 @@ OT
 type="number"
 id="dailyRate"
 value="550"
-oninput="saveSettings(); updatePayPeriod();"
 >
 
 <label>
@@ -375,7 +406,6 @@ oninput="saveSettings(); updatePayPeriod();"
 type="number"
 id="insuranceTotal"
 value="6000"
-oninput="saveSettings(); updatePayPeriod();"
 >
 
 <label>
@@ -386,7 +416,6 @@ oninput="saveSettings(); updatePayPeriod();"
 type="number"
 id="workInsurance"
 value="150"
-oninput="saveSettings(); updatePayPeriod();"
 >
 
 <label>
@@ -397,53 +426,382 @@ oninput="saveSettings(); updatePayPeriod();"
 type="number"
 id="socialSecurity"
 value="83"
-oninput="saveSettings(); updatePayPeriod();"
 >
 
 </div>
 
 </div>
 
+</div>
 
-<script>
 
-let currentDate = new Date();
+<script type="module">
 
-let data =
-JSON.parse(localStorage.getItem("workCalendar"))
-|| {};
+/* =====================================================
+   FIREBASE
+===================================================== */
 
-let settings =
-JSON.parse(localStorage.getItem("workSettings"))
-|| {
-    dailyRate: 550,
-    insuranceTotal: 6000,
-    workInsurance: 150,
-    socialSecurity: 83
+import { initializeApp }
+from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
+
+import {
+    getAuth,
+    GoogleAuthProvider,
+    signInWithPopup,
+    signOut,
+    onAuthStateChanged
+}
+from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
+
+import {
+    getFirestore,
+    doc,
+    getDoc,
+    setDoc
+}
+from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
+
+
+const firebaseConfig = {
+
+    apiKey:
+        "AIzaSyCixSYpEEl4oDZG2hGrTOXv51OkfGJD_Xk",
+
+    authDomain:
+        "workcalendar-75997.firebaseapp.com",
+
+    projectId:
+        "workcalendar-75997",
+
+    storageBucket:
+        "workcalendar-75997.firebasestorage.app",
+
+    messagingSenderId:
+        "10110694468",
+
+    appId:
+        "1:10110694468:web:3b1ccb9c35fad5f6517811",
+
+    measurementId:
+        "G-QZCBWQ2JSS"
+
 };
 
 
-// รอบปัจจุบัน
+const appFirebase =
+    initializeApp(firebaseConfig);
+
+const auth =
+    getAuth(appFirebase);
+
+const db =
+    getFirestore(appFirebase);
+
+const provider =
+    new GoogleAuthProvider();
+
+
+let currentUser = null;
+
+
+/* =====================================================
+   ตัวแปรระบบ
+===================================================== */
+
+let currentDate = new Date();
+
+let data = {};
+
+let settings = {
+
+    dailyRate: 550,
+
+    insuranceTotal: 6000,
+
+    workInsurance: 150,
+
+    socialSecurity: 83
+
+};
+
 
 let selectedPeriodIndex = 0;
 
 
-// =====================================================
-// หารอบเงิน
-// =====================================================
-//
-// รอบที่ใช้:
-//
-// 8 - 14
-// 15 - 21
-// 22 - 28
-// 29 - 5
-// 6 - 12
-// 13 - 19
-//
-// เงินออก 7 วันหลังวันสุดท้าย
-//
-// =====================================================
+/* =====================================================
+   LOGIN
+===================================================== */
+
+document
+.getElementById("loginBtn")
+.addEventListener("click", async function() {
+
+    try {
+
+        await signInWithPopup(
+            auth,
+            provider
+        );
+
+    }
+    catch(error) {
+
+        console.error(error);
+
+        alert(
+            "เข้าสู่ระบบไม่สำเร็จ\n\n"
+            + error.code
+        );
+
+    }
+
+});
+
+
+/* =====================================================
+   LOGOUT
+===================================================== */
+
+document
+.getElementById("logoutBtn")
+.addEventListener("click", async function() {
+
+    await signOut(auth);
+
+});
+
+
+/* =====================================================
+   PATH FIRESTORE
+===================================================== */
+
+function userDoc(path) {
+
+    return doc(
+        db,
+        "users",
+        currentUser.uid,
+        ...path.split("/")
+    );
+
+}
+
+
+/* =====================================================
+   โหลดข้อมูลจาก FIRESTORE
+===================================================== */
+
+async function loadCloudData() {
+
+    try {
+
+        const calendarSnap =
+            await getDoc(
+                userDoc("calendar/data")
+            );
+
+        if (calendarSnap.exists()) {
+
+            data =
+                calendarSnap.data().data || {};
+
+        }
+
+        const settingsSnap =
+            await getDoc(
+                userDoc("settings/config")
+            );
+
+        if (settingsSnap.exists()) {
+
+            settings =
+                {
+                    ...settings,
+                    ...settingsSnap.data().settings
+                };
+
+        }
+
+        loadSettings();
+
+        renderCalendar();
+
+        updatePayPeriod();
+
+    }
+
+    catch(error) {
+
+        console.error(
+            "LOAD ERROR:",
+            error
+        );
+
+        alert(
+            "โหลดข้อมูลไม่สำเร็จ\n\n"
+            + error.code
+        );
+
+    }
+
+}
+
+
+/* =====================================================
+   บันทึกข้อมูลลง FIRESTORE
+===================================================== */
+
+async function saveData() {
+
+    if (!currentUser) {
+
+        return;
+
+    }
+
+    try {
+
+        await setDoc(
+
+            userDoc("calendar/data"),
+
+            {
+                data: data
+            },
+
+            {
+                merge: true
+            }
+
+        );
+
+        console.log(
+            "บันทึกข้อมูลปฏิทินสำเร็จ"
+        );
+
+    }
+
+    catch(error) {
+
+        console.error(
+            "SAVE ERROR:",
+            error
+        );
+
+        alert(
+            "บันทึกข้อมูลไม่สำเร็จ\n\n"
+            + error.code
+        );
+
+    }
+
+}
+
+
+/* =====================================================
+   บันทึก SETTINGS
+===================================================== */
+
+async function saveSettings() {
+
+    settings.dailyRate =
+        Number(
+            document
+            .getElementById("dailyRate")
+            .value
+        );
+
+    settings.insuranceTotal =
+        Number(
+            document
+            .getElementById("insuranceTotal")
+            .value
+        );
+
+    settings.workInsurance =
+        Number(
+            document
+            .getElementById("workInsurance")
+            .value
+        );
+
+    settings.socialSecurity =
+        Number(
+            document
+            .getElementById("socialSecurity")
+            .value
+        );
+
+
+    if (!currentUser) {
+
+        return;
+
+    }
+
+
+    try {
+
+        await setDoc(
+
+            userDoc("settings/config"),
+
+            {
+                settings: settings
+            },
+
+            {
+                merge: true
+            }
+
+        );
+
+    }
+
+    catch(error) {
+
+        console.error(
+            "SETTING SAVE ERROR:",
+            error
+        );
+
+    }
+
+}
+
+
+/* =====================================================
+   LOAD SETTINGS
+===================================================== */
+
+function loadSettings() {
+
+    document
+    .getElementById("dailyRate")
+    .value =
+        settings.dailyRate;
+
+    document
+    .getElementById("insuranceTotal")
+    .value =
+        settings.insuranceTotal;
+
+    document
+    .getElementById("workInsurance")
+    .value =
+        settings.workInsurance;
+
+    document
+    .getElementById("socialSecurity")
+    .value =
+        settings.socialSecurity;
+
+}
+
+
+/* =====================================================
+   รอบเงิน
+===================================================== */
 
 function getPeriodFromDate(date) {
 
@@ -456,13 +814,24 @@ function getPeriodFromDate(date) {
     let month = d.getMonth();
 
 
-    // 29 - 5
-
     if (day >= 29) {
 
         return {
-            start: new Date(year, month, 29),
-            end: new Date(year, month + 1, 5)
+
+            start:
+                new Date(
+                    year,
+                    month,
+                    29
+                ),
+
+            end:
+                new Date(
+                    year,
+                    month + 1,
+                    5
+                )
+
         };
 
     }
@@ -471,78 +840,147 @@ function getPeriodFromDate(date) {
     if (day <= 5) {
 
         return {
-            start: new Date(year, month - 1, 29),
-            end: new Date(year, month, 5)
+
+            start:
+                new Date(
+                    year,
+                    month - 1,
+                    29
+                ),
+
+            end:
+                new Date(
+                    year,
+                    month,
+                    5
+                )
+
         };
 
     }
 
-
-    // 6 - 12
 
     if (day >= 6 && day <= 7) {
 
         return {
-            start: new Date(year, month, 6),
-            end: new Date(year, month, 12)
+
+            start:
+                new Date(
+                    year,
+                    month,
+                    6
+                ),
+
+            end:
+                new Date(
+                    year,
+                    month,
+                    12
+                )
+
         };
 
     }
 
-
-    // 8 - 14
 
     if (day >= 8 && day <= 14) {
 
         return {
-            start: new Date(year, month, 8),
-            end: new Date(year, month, 14)
+
+            start:
+                new Date(
+                    year,
+                    month,
+                    8
+                ),
+
+            end:
+                new Date(
+                    year,
+                    month,
+                    14
+                )
+
         };
 
     }
 
-
-    // 15 - 21
 
     if (day >= 15 && day <= 21) {
 
         return {
-            start: new Date(year, month, 15),
-            end: new Date(year, month, 21)
+
+            start:
+                new Date(
+                    year,
+                    month,
+                    15
+                ),
+
+            end:
+                new Date(
+                    year,
+                    month,
+                    21
+                )
+
         };
 
     }
 
-
-    // 22 - 28
 
     if (day >= 22 && day <= 28) {
 
         return {
-            start: new Date(year, month, 22),
-            end: new Date(year, month, 28)
+
+            start:
+                new Date(
+                    year,
+                    month,
+                    22
+                ),
+
+            end:
+                new Date(
+                    year,
+                    month,
+                    28
+                )
+
         };
 
     }
 
 
-    // 13 - 19
-
     return {
-        start: new Date(year, month, 13),
-        end: new Date(year, month, 19)
+
+        start:
+            new Date(
+                year,
+                month,
+                13
+            ),
+
+        end:
+            new Date(
+                year,
+                month,
+                19
+            )
+
     };
 
 }
 
 
-// =====================================================
-// เงินออก 7 วันหลังวันสุดท้าย
-// =====================================================
+/* =====================================================
+   วันเงินออก
+===================================================== */
 
 function getPayday(endDate) {
 
-    let payday = new Date(endDate);
+    let payday =
+        new Date(endDate);
 
     payday.setDate(
         payday.getDate() + 7
@@ -553,9 +991,9 @@ function getPayday(endDate) {
 }
 
 
-// =====================================================
-// วันที่แบบไทย
-// =====================================================
+/* =====================================================
+   FORMAT DATE
+===================================================== */
 
 function formatDate(date) {
 
@@ -568,9 +1006,9 @@ function formatDate(date) {
 }
 
 
-// =====================================================
-// key ของวันที่
-// =====================================================
+/* =====================================================
+   KEY
+===================================================== */
 
 function getKey(date) {
 
@@ -583,81 +1021,14 @@ function getKey(date) {
 }
 
 
-// =====================================================
-// บันทึกข้อมูล
-// =====================================================
+/* =====================================================
+   MOVE PERIOD
+===================================================== */
 
-function saveData() {
-
-    localStorage.setItem(
-        "workCalendar",
-        JSON.stringify(data)
-    );
-
-}
-
-
-// =====================================================
-// บันทึกการตั้งค่า
-// =====================================================
-
-function saveSettings() {
-
-    settings.dailyRate =
-        Number(
-            document.getElementById("dailyRate").value
-        );
-
-    settings.insuranceTotal =
-        Number(
-            document.getElementById("insuranceTotal").value
-        );
-
-    settings.workInsurance =
-        Number(
-            document.getElementById("workInsurance").value
-        );
-
-    settings.socialSecurity =
-        Number(
-            document.getElementById("socialSecurity").value
-        );
-
-
-    localStorage.setItem(
-        "workSettings",
-        JSON.stringify(settings)
-    );
-
-}
-
-
-// =====================================================
-// โหลดการตั้งค่า
-// =====================================================
-
-function loadSettings() {
-
-    document.getElementById("dailyRate").value =
-        settings.dailyRate;
-
-    document.getElementById("insuranceTotal").value =
-        settings.insuranceTotal;
-
-    document.getElementById("workInsurance").value =
-        settings.workInsurance;
-
-    document.getElementById("socialSecurity").value =
-        settings.socialSecurity;
-
-}
-
-
-// =====================================================
-// หารอบก่อนหน้า
-// =====================================================
-
-function movePeriod(period, direction) {
+function movePeriod(
+    period,
+    direction
+) {
 
     let newDate =
         new Date(period.start);
@@ -667,20 +1038,25 @@ function movePeriod(period, direction) {
         + (direction * 7)
     );
 
-    return getPeriodFromDate(newDate);
+    return getPeriodFromDate(
+        newDate
+    );
 
 }
 
 
-// =====================================================
-// หาจำนวนรอบที่ "เงินออกแล้ว"
-// =====================================================
+/* =====================================================
+   PAID INSURANCE
+===================================================== */
 
 function getPaidInsurancePeriods() {
 
-    const today = new Date();
+    const today =
+        new Date();
 
-    today.setHours(0, 0, 0, 0);
+    today.setHours(
+        0, 0, 0, 0
+    );
 
 
     let currentPeriod =
@@ -689,32 +1065,44 @@ function getPaidInsurancePeriods() {
 
     let count = 0;
 
+
     let period =
-        new Date(currentPeriod.start);
+        new Date(
+            currentPeriod.start
+        );
 
 
-    // ย้อนกลับไปตรวจสอบรอบที่ผ่านมา
-    // จำกัดไว้เพื่อป้องกันการวนลูปมากเกินไป
-
-    for (let i = 0; i < 200; i++) {
+    for (
+        let i = 0;
+        i < 200;
+        i++
+    ) {
 
         let p =
-            getPeriodFromDate(period);
+            getPeriodFromDate(
+                period
+            );
+
 
         let payday =
-            getPayday(p.end);
+            getPayday(
+                p.end
+            );
 
-        payday.setHours(0, 0, 0, 0);
+
+        payday.setHours(
+            0, 0, 0, 0
+        );
 
 
-        if (payday <= today) {
+        if (
+            payday <= today
+        ) {
 
             count++;
 
         }
 
-
-        // ถอยหลัง 7 วัน
 
         period.setDate(
             period.getDate() - 7
@@ -728,14 +1116,16 @@ function getPaidInsurancePeriods() {
 }
 
 
-// =====================================================
-// แสดงปฏิทิน
-// =====================================================
+/* =====================================================
+   RENDER CALENDAR
+===================================================== */
 
 function renderCalendar() {
 
     const calendar =
-        document.getElementById("calendar");
+        document.getElementById(
+            "calendar"
+        );
 
     calendar.innerHTML = "";
 
@@ -748,15 +1138,26 @@ function renderCalendar() {
 
 
     const firstDay =
-        new Date(year, month, 1);
+        new Date(
+            year,
+            month,
+            1
+        );
 
 
     const lastDay =
-        new Date(year, month + 1, 0);
+        new Date(
+            year,
+            month + 1,
+            0
+        );
 
 
     const startDay =
-        (firstDay.getDay() + 6) % 7;
+        (
+            firstDay.getDay()
+            + 6
+        ) % 7;
 
 
     const daysInMonth =
@@ -781,7 +1182,11 @@ function renderCalendar() {
     ];
 
 
-    document.getElementById("monthYear").innerText =
+    document
+    .getElementById(
+        "monthYear"
+    )
+    .innerText =
 
         months[month]
         + " "
@@ -795,7 +1200,9 @@ function renderCalendar() {
     ) {
 
         calendar.appendChild(
-            document.createElement("div")
+            document.createElement(
+                "div"
+            )
         );
 
     }
@@ -816,10 +1223,13 @@ function renderCalendar() {
 
 
         const cell =
-            document.createElement("div");
+            document.createElement(
+                "div"
+            );
 
 
-        cell.className = "day";
+        cell.className =
+            "day";
 
 
         const status =
@@ -827,16 +1237,24 @@ function renderCalendar() {
 
 
         if (status === 0)
-            cell.classList.add("work");
+            cell.classList.add(
+                "work"
+            );
 
         if (status === 1)
-            cell.classList.add("off");
+            cell.classList.add(
+                "off"
+            );
 
         if (status === 2)
-            cell.classList.add("leave");
+            cell.classList.add(
+                "leave"
+            );
 
         if (status === 3)
-            cell.classList.add("ot");
+            cell.classList.add(
+                "ot"
+            );
 
 
         let text = "";
@@ -866,77 +1284,95 @@ function renderCalendar() {
             </div>`;
 
 
-        cell.onclick = function() {
+        cell.onclick =
+            async function() {
 
+                if (
+                    data[key]
+                    === undefined
+                ) {
 
-            if (data[key] === undefined) {
-
-                data[key] = 0;
-
-            }
-
-            else {
-
-                data[key]++;
-
-                if (data[key] > 3) {
-
-                    delete data[key];
+                    data[key] = 0;
 
                 }
 
-            }
+                else {
+
+                    data[key]++;
+
+                    if (
+                        data[key] > 3
+                    ) {
+
+                        delete data[key];
+
+                    }
+
+                }
 
 
-            saveData();
+                renderCalendar();
 
-            renderCalendar();
+                updatePayPeriod();
 
-            updatePayPeriod();
+                await saveData();
 
-        };
+            };
 
 
-        calendar.appendChild(cell);
+        calendar.appendChild(
+            cell
+        );
 
     }
 
 }
 
 
-// =====================================================
-// คำนวณรอบเงิน
-// =====================================================
+/* =====================================================
+   UPDATE PAY PERIOD
+===================================================== */
 
 function updatePayPeriod() {
 
     let baseDate =
-        new Date(currentDate);
+        new Date(
+            currentDate
+        );
 
 
     let period =
-        getPeriodFromDate(baseDate);
+        getPeriodFromDate(
+            baseDate
+        );
 
-
-    // เลื่อนรอบ
 
     for (
         let i = 0;
-        i < Math.abs(selectedPeriodIndex);
+        i < Math.abs(
+            selectedPeriodIndex
+        );
         i++
     ) {
 
         period =
             movePeriod(
+
                 period,
-                selectedPeriodIndex > 0 ? 1 : -1
+
+                selectedPeriodIndex > 0
+                    ? 1
+                    : -1
+
             );
 
     }
 
 
     const payday =
-        getPayday(period.end);
+        getPayday(
+            period.end
+        );
 
 
     let workCount = 0;
@@ -947,7 +1383,9 @@ function updatePayPeriod() {
 
 
     let date =
-        new Date(period.start);
+        new Date(
+            period.start
+        );
 
 
     while (
@@ -958,15 +1396,21 @@ function updatePayPeriod() {
             getKey(date);
 
 
-        if (data[key] === 0)
+        if (
+            data[key] === 0
+        )
             workCount++;
 
 
-        if (data[key] === 2)
+        if (
+            data[key] === 2
+        )
             leaveCount++;
 
 
-        if (data[key] === 3)
+        if (
+            data[key] === 3
+        )
             otCount++;
 
 
@@ -977,16 +1421,10 @@ function updatePayPeriod() {
     }
 
 
-    // ค่าแรง
-
     const salary =
-        workCount *
-        settings.dailyRate;
+        workCount
+        * settings.dailyRate;
 
-
-    // =================================================
-    // ประกันการทำงาน
-    // =================================================
 
     const paidPeriods =
         getPaidInsurancePeriods();
@@ -994,23 +1432,25 @@ function updatePayPeriod() {
 
     const alreadyPaid =
         Math.min(
+
             settings.insuranceTotal,
-            paidPeriods *
-            settings.workInsurance
+
+            paidPeriods
+            * settings.workInsurance
+
         );
 
 
     const remaining =
         Math.max(
+
             0,
+
             settings.insuranceTotal
             - alreadyPaid
+
         );
 
-
-    // รอบปัจจุบันจะหักหรือไม่
-    // ถ้าวันเงินออกของรอบนี้ผ่านแล้ว
-    // ถือว่าหักไปแล้ว
 
     let insuranceDeduct = 0;
 
@@ -1018,45 +1458,50 @@ function updatePayPeriod() {
     const today =
         new Date();
 
-    today.setHours(0, 0, 0, 0);
+    today.setHours(
+        0, 0, 0, 0
+    );
 
 
     const paydayCheck =
         new Date(payday);
 
-    paydayCheck.setHours(0, 0, 0, 0);
+    paydayCheck.setHours(
+        0, 0, 0, 0
+    );
 
 
     if (
+
         paydayCheck <= today
+
         &&
+
         workCount > 0
+
         &&
+
         remaining > 0
+
     ) {
 
         insuranceDeduct =
             Math.min(
+
                 settings.workInsurance,
+
                 remaining
+
             );
 
     }
 
 
-    // =================================================
-    // ประกันสังคม
-    // =================================================
-
     const social =
         workCount > 0
-        ? settings.socialSecurity
-        : 0;
+            ? settings.socialSecurity
+            : 0;
 
-
-    // =================================================
-    // เงินสุทธิ
-    // =================================================
 
     const net =
         salary
@@ -1064,98 +1509,146 @@ function updatePayPeriod() {
         - social;
 
 
-    document.getElementById("payPeriod").innerHTML =
+    document
+    .getElementById(
+        "payPeriod"
+    )
+    .innerHTML =
 
         "📅 รอบวันที่ <b>"
-        + formatDate(period.start)
+        + formatDate(
+            period.start
+        )
         + " – "
-        + formatDate(period.end)
+        + formatDate(
+            period.end
+        )
         + "</b>";
 
 
-    document.getElementById("payday").innerHTML =
+    document
+    .getElementById(
+        "payday"
+    )
+    .innerHTML =
 
         "💵 เงินออกวันที่ <b>"
-        + formatDate(payday)
+        + formatDate(
+            payday
+        )
         + "</b>";
 
 
-    document.getElementById("workCount").innerText =
+    document
+    .getElementById(
+        "workCount"
+    )
+    .innerText =
         workCount;
 
 
-    document.getElementById("leaveCount").innerText =
+    document
+    .getElementById(
+        "leaveCount"
+    )
+    .innerText =
         leaveCount;
 
 
-    document.getElementById("otCount").innerText =
+    document
+    .getElementById(
+        "otCount"
+    )
+    .innerText =
         otCount;
 
 
-    document.getElementById("salary").innerText =
+    document
+    .getElementById(
+        "salary"
+    )
+    .innerText =
         salary.toLocaleString();
 
 
-    document.getElementById("insurance").innerText =
-
+    document
+    .getElementById(
+        "insurance"
+    )
+    .innerText =
         "-"
         + insuranceDeduct.toLocaleString();
 
 
-    document.getElementById("social").innerText =
-
+    document
+    .getElementById(
+        "social"
+    )
+    .innerText =
         "-"
         + social.toLocaleString();
 
 
-    document.getElementById("netSalary").innerText =
-
+    document
+    .getElementById(
+        "netSalary"
+    )
+    .innerText =
         net.toLocaleString();
 
 
-    // แสดงยอดประกัน
-
-    document.getElementById(
+    document
+    .getElementById(
         "insurancePaidDisplay"
-    ).innerText =
+    )
+    .innerText =
         alreadyPaid.toLocaleString();
 
 
-    document.getElementById(
+    document
+    .getElementById(
         "insuranceRemainingDisplay"
-    ).innerText =
+    )
+    .innerText =
         remaining.toLocaleString();
 
 
-    document.getElementById(
+    document
+    .getElementById(
         "insurancePeriodDisplay"
-    ).innerText =
-        Math.floor(
-            alreadyPaid /
-            settings.workInsurance
-        );
+    )
+    .innerText =
+        settings.workInsurance > 0
+            ? Math.floor(
+                alreadyPaid
+                / settings.workInsurance
+            )
+            : 0;
 
 }
 
 
-// =====================================================
-// เปลี่ยนรอบเงิน
-// =====================================================
+/* =====================================================
+   CHANGE PERIOD
+===================================================== */
 
-function changePeriod(direction) {
+window.changePeriod =
+function(direction) {
 
-    selectedPeriodIndex += direction;
+    selectedPeriodIndex +=
+        direction;
 
     updatePayPeriod();
 
-}
+};
 
 
-// =====================================================
-// เปลี่ยนเดือน
-// =====================================================
+/* =====================================================
+   CHANGE MONTH
+===================================================== */
 
-function changeMonth(amount) {
+window.changeMonth =
+function(amount) {
 
     currentDate.setMonth(
         currentDate.getMonth()
@@ -1170,20 +1663,161 @@ function changeMonth(amount) {
 
     updatePayPeriod();
 
-}
+};
 
 
-// =====================================================
-// เริ่มระบบ
-// =====================================================
+/* =====================================================
+   SETTINGS EVENT
+===================================================== */
 
-loadSettings();
+document
+.getElementById("dailyRate")
+.addEventListener(
+    "input",
+    async function() {
 
-renderCalendar();
+        await saveSettings();
 
-updatePayPeriod();
+        updatePayPeriod();
+
+    }
+);
+
+
+document
+.getElementById("insuranceTotal")
+.addEventListener(
+    "input",
+    async function() {
+
+        await saveSettings();
+
+        updatePayPeriod();
+
+    }
+);
+
+
+document
+.getElementById("workInsurance")
+.addEventListener(
+    "input",
+    async function() {
+
+        await saveSettings();
+
+        updatePayPeriod();
+
+    }
+);
+
+
+document
+.getElementById("socialSecurity")
+.addEventListener(
+    "input",
+    async function() {
+
+        await saveSettings();
+
+        updatePayPeriod();
+
+    }
+);
+
+
+/* =====================================================
+   AUTH STATE
+===================================================== */
+
+onAuthStateChanged(
+    auth,
+    async function(user) {
+
+        currentUser = user;
+
+
+        if (user) {
+
+            document
+            .getElementById(
+                "loginBtn"
+            )
+            .style.display =
+                "none";
+
+
+            document
+            .getElementById(
+                "logoutBtn"
+            )
+            .style.display =
+                "inline-block";
+
+
+            document
+            .getElementById(
+                "userInfo"
+            )
+            .innerText =
+                "👤 "
+                + (
+                    user.displayName
+                    || user.email
+                );
+
+
+            document
+            .getElementById(
+                "app"
+            )
+            .style.display =
+                "block";
+
+
+            await loadCloudData();
+
+        }
+
+        else {
+
+            document
+            .getElementById(
+                "loginBtn"
+            )
+            .style.display =
+                "inline-block";
+
+
+            document
+            .getElementById(
+                "logoutBtn"
+            )
+            .style.display =
+                "none";
+
+
+            document
+            .getElementById(
+                "userInfo"
+            )
+            .innerText = "";
+
+
+            document
+            .getElementById(
+                "app"
+            )
+            .style.display =
+                "none";
+
+        }
+
+    }
+);
 
 </script>
 
 </body>
 </html>
+```
