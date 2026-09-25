@@ -1,0 +1,1189 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>ปฏิทินวันทำงาน</title>
+
+<style>
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #f4f6f8;
+    color: #333;
+}
+
+.container {
+    max-width: 950px;
+    margin: auto;
+    padding: 15px;
+}
+
+h1 {
+    text-align: center;
+}
+
+.card {
+    background: white;
+    border-radius: 15px;
+    padding: 18px;
+    margin-bottom: 15px;
+    box-shadow: 0 3px 12px rgba(0,0,0,0.08);
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+button {
+    border: none;
+    padding: 10px 15px;
+    border-radius: 8px;
+    background: #333;
+    color: white;
+    cursor: pointer;
+    font-size: 15px;
+}
+
+.month {
+    font-size: 22px;
+    font-weight: bold;
+}
+
+.weekdays,
+.days {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 5px;
+}
+
+.weekday {
+    text-align: center;
+    font-weight: bold;
+    padding: 10px 0;
+}
+
+.day {
+    min-height: 80px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 7px;
+    cursor: pointer;
+    background: white;
+}
+
+.day:hover {
+    background: #f0f0f0;
+}
+
+.day-number {
+    font-weight: bold;
+}
+
+.status {
+    margin-top: 8px;
+    text-align: center;
+    font-size: 12px;
+}
+
+.work {
+    background: #e8f5e9;
+    border: 2px solid #66bb6a;
+}
+
+.off {
+    background: #ffebee;
+    border: 2px solid #ef5350;
+}
+
+.leave {
+    background: #fff8e1;
+    border: 2px solid #ffca28;
+}
+
+.ot {
+    background: #e3f2fd;
+    border: 2px solid #42a5f5;
+}
+
+.summary {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+}
+
+.summary-box {
+    background: #f5f5f5;
+    padding: 15px;
+    border-radius: 10px;
+}
+
+.value {
+    font-size: 20px;
+    font-weight: bold;
+}
+
+input {
+    width: 100%;
+    padding: 10px;
+    margin-top: 5px;
+    margin-bottom: 10px;
+    border: 1px solid #ccc;
+    border-radius: 7px;
+    font-size: 16px;
+}
+
+.pay-title {
+    text-align: center;
+    font-size: 22px;
+    font-weight: bold;
+}
+
+.pay-period {
+    text-align: center;
+    font-size: 18px;
+    margin: 10px 0;
+}
+
+.payday {
+    text-align: center;
+    font-size: 18px;
+    margin-bottom: 15px;
+}
+
+.nav-buttons {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.nav-buttons button {
+    flex: 1;
+}
+
+.net {
+    font-size: 26px;
+    font-weight: bold;
+    text-align: center;
+    margin-top: 10px;
+}
+
+.insurance-info {
+    margin-top: 15px;
+    padding: 15px;
+    background: #fff8e1;
+    border-radius: 10px;
+    line-height: 1.8;
+}
+
+@media(max-width:600px) {
+
+    .container {
+        padding: 8px;
+    }
+
+    .card {
+        padding: 12px;
+    }
+
+    .day {
+        min-height: 65px;
+        font-size: 13px;
+    }
+
+    .status {
+        font-size: 10px;
+    }
+
+    .month {
+        font-size: 18px;
+    }
+
+    .pay-title {
+        font-size: 19px;
+    }
+
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>📅 ปฏิทินวันทำงาน</h1>
+
+<!-- ปฏิทิน -->
+
+<div class="card">
+
+<div class="header">
+
+<button onclick="changeMonth(-1)">◀</button>
+
+<div class="month" id="monthYear"></div>
+
+<button onclick="changeMonth(1)">▶</button>
+
+</div>
+
+<br>
+
+<div class="weekdays">
+
+<div class="weekday">จ</div>
+<div class="weekday">อ</div>
+<div class="weekday">พ</div>
+<div class="weekday">พฤ</div>
+<div class="weekday">ศ</div>
+<div class="weekday">ส</div>
+<div class="weekday">อา</div>
+
+</div>
+
+<div class="days" id="calendar"></div>
+
+</div>
+
+
+<!-- ดูรอบเงิน -->
+
+<div class="card">
+
+<div class="pay-title">
+💰 ดูรอบเงิน
+</div>
+
+<div class="nav-buttons">
+
+<button onclick="changePeriod(-1)">
+◀ รอบก่อน
+</button>
+
+<button onclick="changePeriod(1)">
+รอบถัดไป ▶
+</button>
+
+</div>
+
+<br>
+
+<div class="pay-period" id="payPeriod"></div>
+
+<div class="payday" id="payday"></div>
+
+<div class="summary">
+
+<div class="summary-box">
+วันทำงาน
+<br>
+<span class="value" id="workCount">0</span> วัน
+</div>
+
+<div class="summary-box">
+วันลา
+<br>
+<span class="value" id="leaveCount">0</span> วัน
+</div>
+
+<div class="summary-box">
+OT
+<br>
+<span class="value" id="otCount">0</span> วัน
+</div>
+
+<div class="summary-box">
+ค่าแรง
+<br>
+<span class="value" id="salary">0</span> บาท
+</div>
+
+<div class="summary-box">
+ประกันการทำงาน
+<br>
+<span class="value" id="insurance">0</span> บาท
+</div>
+
+<div class="summary-box">
+ประกันสังคม
+<br>
+<span class="value" id="social">0</span> บาท
+</div>
+
+</div>
+
+<div class="insurance-info">
+
+<b>📌 สถานะประกันการทำงาน</b><br>
+
+จ่ายแล้ว:
+<span id="insurancePaidDisplay">0</span> บาท
+<br>
+
+คงเหลือ:
+<span id="insuranceRemainingDisplay">0</span> บาท
+<br>
+
+已จ่ายแล้ว:
+<span id="insurancePeriodDisplay">0</span> รอบ
+
+</div>
+
+<div class="net">
+
+รับสุทธิ
+<br>
+
+<span id="netSalary">0</span> บาท
+
+</div>
+
+</div>
+
+
+<!-- ตั้งค่า -->
+
+<div class="card">
+
+<h2>⚙️ ตั้งค่ารายได้</h2>
+
+<label>
+ค่าแรงต่อวัน
+</label>
+
+<input
+type="number"
+id="dailyRate"
+value="550"
+oninput="saveSettings(); updatePayPeriod();"
+>
+
+<label>
+ประกันการทำงานทั้งหมด
+</label>
+
+<input
+type="number"
+id="insuranceTotal"
+value="6000"
+oninput="saveSettings(); updatePayPeriod();"
+>
+
+<label>
+หักประกันการทำงานต่องวด
+</label>
+
+<input
+type="number"
+id="workInsurance"
+value="150"
+oninput="saveSettings(); updatePayPeriod();"
+>
+
+<label>
+ประกันสังคมต่องวด
+</label>
+
+<input
+type="number"
+id="socialSecurity"
+value="83"
+oninput="saveSettings(); updatePayPeriod();"
+>
+
+</div>
+
+</div>
+
+
+<script>
+
+let currentDate = new Date();
+
+let data =
+JSON.parse(localStorage.getItem("workCalendar"))
+|| {};
+
+let settings =
+JSON.parse(localStorage.getItem("workSettings"))
+|| {
+    dailyRate: 550,
+    insuranceTotal: 6000,
+    workInsurance: 150,
+    socialSecurity: 83
+};
+
+
+// รอบปัจจุบัน
+
+let selectedPeriodIndex = 0;
+
+
+// =====================================================
+// หารอบเงิน
+// =====================================================
+//
+// รอบที่ใช้:
+//
+// 8 - 14
+// 15 - 21
+// 22 - 28
+// 29 - 5
+// 6 - 12
+// 13 - 19
+//
+// เงินออก 7 วันหลังวันสุดท้าย
+//
+// =====================================================
+
+function getPeriodFromDate(date) {
+
+    let d = new Date(date);
+
+    let day = d.getDate();
+
+    let year = d.getFullYear();
+
+    let month = d.getMonth();
+
+
+    // 29 - 5
+
+    if (day >= 29) {
+
+        return {
+            start: new Date(year, month, 29),
+            end: new Date(year, month + 1, 5)
+        };
+
+    }
+
+
+    if (day <= 5) {
+
+        return {
+            start: new Date(year, month - 1, 29),
+            end: new Date(year, month, 5)
+        };
+
+    }
+
+
+    // 6 - 12
+
+    if (day >= 6 && day <= 7) {
+
+        return {
+            start: new Date(year, month, 6),
+            end: new Date(year, month, 12)
+        };
+
+    }
+
+
+    // 8 - 14
+
+    if (day >= 8 && day <= 14) {
+
+        return {
+            start: new Date(year, month, 8),
+            end: new Date(year, month, 14)
+        };
+
+    }
+
+
+    // 15 - 21
+
+    if (day >= 15 && day <= 21) {
+
+        return {
+            start: new Date(year, month, 15),
+            end: new Date(year, month, 21)
+        };
+
+    }
+
+
+    // 22 - 28
+
+    if (day >= 22 && day <= 28) {
+
+        return {
+            start: new Date(year, month, 22),
+            end: new Date(year, month, 28)
+        };
+
+    }
+
+
+    // 13 - 19
+
+    return {
+        start: new Date(year, month, 13),
+        end: new Date(year, month, 19)
+    };
+
+}
+
+
+// =====================================================
+// เงินออก 7 วันหลังวันสุดท้าย
+// =====================================================
+
+function getPayday(endDate) {
+
+    let payday = new Date(endDate);
+
+    payday.setDate(
+        payday.getDate() + 7
+    );
+
+    return payday;
+
+}
+
+
+// =====================================================
+// วันที่แบบไทย
+// =====================================================
+
+function formatDate(date) {
+
+    return date.getDate()
+        + "/"
+        + (date.getMonth() + 1)
+        + "/"
+        + (date.getFullYear() + 543);
+
+}
+
+
+// =====================================================
+// key ของวันที่
+// =====================================================
+
+function getKey(date) {
+
+    return date.getFullYear()
+        + "-"
+        + (date.getMonth() + 1)
+        + "-"
+        + date.getDate();
+
+}
+
+
+// =====================================================
+// บันทึกข้อมูล
+// =====================================================
+
+function saveData() {
+
+    localStorage.setItem(
+        "workCalendar",
+        JSON.stringify(data)
+    );
+
+}
+
+
+// =====================================================
+// บันทึกการตั้งค่า
+// =====================================================
+
+function saveSettings() {
+
+    settings.dailyRate =
+        Number(
+            document.getElementById("dailyRate").value
+        );
+
+    settings.insuranceTotal =
+        Number(
+            document.getElementById("insuranceTotal").value
+        );
+
+    settings.workInsurance =
+        Number(
+            document.getElementById("workInsurance").value
+        );
+
+    settings.socialSecurity =
+        Number(
+            document.getElementById("socialSecurity").value
+        );
+
+
+    localStorage.setItem(
+        "workSettings",
+        JSON.stringify(settings)
+    );
+
+}
+
+
+// =====================================================
+// โหลดการตั้งค่า
+// =====================================================
+
+function loadSettings() {
+
+    document.getElementById("dailyRate").value =
+        settings.dailyRate;
+
+    document.getElementById("insuranceTotal").value =
+        settings.insuranceTotal;
+
+    document.getElementById("workInsurance").value =
+        settings.workInsurance;
+
+    document.getElementById("socialSecurity").value =
+        settings.socialSecurity;
+
+}
+
+
+// =====================================================
+// หารอบก่อนหน้า
+// =====================================================
+
+function movePeriod(period, direction) {
+
+    let newDate =
+        new Date(period.start);
+
+    newDate.setDate(
+        newDate.getDate()
+        + (direction * 7)
+    );
+
+    return getPeriodFromDate(newDate);
+
+}
+
+
+// =====================================================
+// หาจำนวนรอบที่ "เงินออกแล้ว"
+// =====================================================
+
+function getPaidInsurancePeriods() {
+
+    const today = new Date();
+
+    today.setHours(0, 0, 0, 0);
+
+
+    let currentPeriod =
+        getPeriodFromDate(today);
+
+
+    let count = 0;
+
+    let period =
+        new Date(currentPeriod.start);
+
+
+    // ย้อนกลับไปตรวจสอบรอบที่ผ่านมา
+    // จำกัดไว้เพื่อป้องกันการวนลูปมากเกินไป
+
+    for (let i = 0; i < 200; i++) {
+
+        let p =
+            getPeriodFromDate(period);
+
+        let payday =
+            getPayday(p.end);
+
+        payday.setHours(0, 0, 0, 0);
+
+
+        if (payday <= today) {
+
+            count++;
+
+        }
+
+
+        // ถอยหลัง 7 วัน
+
+        period.setDate(
+            period.getDate() - 7
+        );
+
+    }
+
+
+    return count;
+
+}
+
+
+// =====================================================
+// แสดงปฏิทิน
+// =====================================================
+
+function renderCalendar() {
+
+    const calendar =
+        document.getElementById("calendar");
+
+    calendar.innerHTML = "";
+
+
+    const year =
+        currentDate.getFullYear();
+
+    const month =
+        currentDate.getMonth();
+
+
+    const firstDay =
+        new Date(year, month, 1);
+
+
+    const lastDay =
+        new Date(year, month + 1, 0);
+
+
+    const startDay =
+        (firstDay.getDay() + 6) % 7;
+
+
+    const daysInMonth =
+        lastDay.getDate();
+
+
+    const months = [
+
+        "มกราคม",
+        "กุมภาพันธ์",
+        "มีนาคม",
+        "เมษายน",
+        "พฤษภาคม",
+        "มิถุนายน",
+        "กรกฎาคม",
+        "สิงหาคม",
+        "กันยายน",
+        "ตุลาคม",
+        "พฤศจิกายน",
+        "ธันวาคม"
+
+    ];
+
+
+    document.getElementById("monthYear").innerText =
+
+        months[month]
+        + " "
+        + (year + 543);
+
+
+    for (
+        let i = 0;
+        i < startDay;
+        i++
+    ) {
+
+        calendar.appendChild(
+            document.createElement("div")
+        );
+
+    }
+
+
+    for (
+        let day = 1;
+        day <= daysInMonth;
+        day++
+    ) {
+
+        const key =
+            year
+            + "-"
+            + (month + 1)
+            + "-"
+            + day;
+
+
+        const cell =
+            document.createElement("div");
+
+
+        cell.className = "day";
+
+
+        const status =
+            data[key];
+
+
+        if (status === 0)
+            cell.classList.add("work");
+
+        if (status === 1)
+            cell.classList.add("off");
+
+        if (status === 2)
+            cell.classList.add("leave");
+
+        if (status === 3)
+            cell.classList.add("ot");
+
+
+        let text = "";
+
+
+        if (status === 0)
+            text = "✓ ทำงาน";
+
+        if (status === 1)
+            text = "✕ หยุด";
+
+        if (status === 2)
+            text = "ลา";
+
+        if (status === 3)
+            text = "OT";
+
+
+        cell.innerHTML =
+
+            `<div class="day-number">
+                ${day}
+            </div>
+
+            <div class="status">
+                ${text}
+            </div>`;
+
+
+        cell.onclick = function() {
+
+
+            if (data[key] === undefined) {
+
+                data[key] = 0;
+
+            }
+
+            else {
+
+                data[key]++;
+
+                if (data[key] > 3) {
+
+                    delete data[key];
+
+                }
+
+            }
+
+
+            saveData();
+
+            renderCalendar();
+
+            updatePayPeriod();
+
+        };
+
+
+        calendar.appendChild(cell);
+
+    }
+
+}
+
+
+// =====================================================
+// คำนวณรอบเงิน
+// =====================================================
+
+function updatePayPeriod() {
+
+    let baseDate =
+        new Date(currentDate);
+
+
+    let period =
+        getPeriodFromDate(baseDate);
+
+
+    // เลื่อนรอบ
+
+    for (
+        let i = 0;
+        i < Math.abs(selectedPeriodIndex);
+        i++
+    ) {
+
+        period =
+            movePeriod(
+                period,
+                selectedPeriodIndex > 0 ? 1 : -1
+            );
+
+    }
+
+
+    const payday =
+        getPayday(period.end);
+
+
+    let workCount = 0;
+
+    let leaveCount = 0;
+
+    let otCount = 0;
+
+
+    let date =
+        new Date(period.start);
+
+
+    while (
+        date <= period.end
+    ) {
+
+        const key =
+            getKey(date);
+
+
+        if (data[key] === 0)
+            workCount++;
+
+
+        if (data[key] === 2)
+            leaveCount++;
+
+
+        if (data[key] === 3)
+            otCount++;
+
+
+        date.setDate(
+            date.getDate() + 1
+        );
+
+    }
+
+
+    // ค่าแรง
+
+    const salary =
+        workCount *
+        settings.dailyRate;
+
+
+    // =================================================
+    // ประกันการทำงาน
+    // =================================================
+
+    const paidPeriods =
+        getPaidInsurancePeriods();
+
+
+    const alreadyPaid =
+        Math.min(
+            settings.insuranceTotal,
+            paidPeriods *
+            settings.workInsurance
+        );
+
+
+    const remaining =
+        Math.max(
+            0,
+            settings.insuranceTotal
+            - alreadyPaid
+        );
+
+
+    // รอบปัจจุบันจะหักหรือไม่
+    // ถ้าวันเงินออกของรอบนี้ผ่านแล้ว
+    // ถือว่าหักไปแล้ว
+
+    let insuranceDeduct = 0;
+
+
+    const today =
+        new Date();
+
+    today.setHours(0, 0, 0, 0);
+
+
+    const paydayCheck =
+        new Date(payday);
+
+    paydayCheck.setHours(0, 0, 0, 0);
+
+
+    if (
+        paydayCheck <= today
+        &&
+        workCount > 0
+        &&
+        remaining > 0
+    ) {
+
+        insuranceDeduct =
+            Math.min(
+                settings.workInsurance,
+                remaining
+            );
+
+    }
+
+
+    // =================================================
+    // ประกันสังคม
+    // =================================================
+
+    const social =
+        workCount > 0
+        ? settings.socialSecurity
+        : 0;
+
+
+    // =================================================
+    // เงินสุทธิ
+    // =================================================
+
+    const net =
+        salary
+        - insuranceDeduct
+        - social;
+
+
+    document.getElementById("payPeriod").innerHTML =
+
+        "📅 รอบวันที่ <b>"
+        + formatDate(period.start)
+        + " – "
+        + formatDate(period.end)
+        + "</b>";
+
+
+    document.getElementById("payday").innerHTML =
+
+        "💵 เงินออกวันที่ <b>"
+        + formatDate(payday)
+        + "</b>";
+
+
+    document.getElementById("workCount").innerText =
+        workCount;
+
+
+    document.getElementById("leaveCount").innerText =
+        leaveCount;
+
+
+    document.getElementById("otCount").innerText =
+        otCount;
+
+
+    document.getElementById("salary").innerText =
+        salary.toLocaleString();
+
+
+    document.getElementById("insurance").innerText =
+
+        "-"
+        + insuranceDeduct.toLocaleString();
+
+
+    document.getElementById("social").innerText =
+
+        "-"
+        + social.toLocaleString();
+
+
+    document.getElementById("netSalary").innerText =
+
+        net.toLocaleString();
+
+
+    // แสดงยอดประกัน
+
+    document.getElementById(
+        "insurancePaidDisplay"
+    ).innerText =
+        alreadyPaid.toLocaleString();
+
+
+    document.getElementById(
+        "insuranceRemainingDisplay"
+    ).innerText =
+        remaining.toLocaleString();
+
+
+    document.getElementById(
+        "insurancePeriodDisplay"
+    ).innerText =
+        Math.floor(
+            alreadyPaid /
+            settings.workInsurance
+        );
+
+}
+
+
+// =====================================================
+// เปลี่ยนรอบเงิน
+// =====================================================
+
+function changePeriod(direction) {
+
+    selectedPeriodIndex += direction;
+
+    updatePayPeriod();
+
+}
+
+
+// =====================================================
+// เปลี่ยนเดือน
+// =====================================================
+
+function changeMonth(amount) {
+
+    currentDate.setMonth(
+        currentDate.getMonth()
+        + amount
+    );
+
+
+    selectedPeriodIndex = 0;
+
+
+    renderCalendar();
+
+    updatePayPeriod();
+
+}
+
+
+// =====================================================
+// เริ่มระบบ
+// =====================================================
+
+loadSettings();
+
+renderCalendar();
+
+updatePayPeriod();
+
+</script>
+
+</body>
+</html>
