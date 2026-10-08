@@ -1,1823 +1,497 @@
-
 <!DOCTYPE html>
 <html lang="th">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>ปฏิทินวันทำงาน</title>
-
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#c2410c">
+<title>สมุดบันทึกเที่ยววิ่งส่งหมู</title>
 <style>
-
-* {
-    box-sizing: border-box;
+:root{
+  --bg:#fff7ed; --card:#ffffff; --ink:#292524; --muted:#78716c; --line:#e7e5e4;
+  --brand:#c2410c; --brand2:#ea580c; --brand-soft:#ffedd5;
+  --work:#16a34a; --work-soft:#dcfce7;
+  --off:#dc2626; --off-soft:#fee2e2;
+  --wait:#d97706; --wait-soft:#fef3c7;
 }
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;font-family:"Sarabun","Noto Sans Thai",system-ui,-apple-system,Segoe UI,sans-serif;background:var(--bg);color:var(--ink);padding-bottom:40px}
+button{font-family:inherit;border:none;cursor:pointer}
+.wrap{max-width:720px;margin:0 auto;padding:0 14px}
 
-body {
-    margin: 0;
-    font-family: Arial, sans-serif;
-    background: #f4f6f8;
-    color: #333;
-}
+.hero{background:linear-gradient(135deg,var(--brand),var(--brand2));color:#fff;padding:22px 0 70px;border-radius:0 0 28px 28px}
+.hero .top{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.hero h1{margin:0;font-size:22px;line-height:1.2}
+.hero small{opacity:.85;display:block;margin-top:3px;font-size:13px}
+.user-chip{display:flex;align-items:center;gap:8px;font-size:13px}
+.user-chip button{background:rgba(255,255,255,.2);color:#fff;padding:7px 12px;border-radius:999px;font-size:13px}
 
-.container {
-    max-width: 950px;
-    margin: auto;
-    padding: 15px;
-}
+#loginView{text-align:center;padding:60px 20px}
+#loginView .big{font-size:64px}
+#loginView h2{margin:10px 0 6px}
+#loginView p{color:var(--muted);margin:0 0 22px}
+.btn-primary{background:var(--brand);color:#fff;padding:14px 22px;border-radius:14px;font-size:17px;font-weight:700;box-shadow:0 6px 16px rgba(194,65,12,.3)}
 
-h1 {
-    text-align: center;
-}
+#app{display:none}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:-52px}
+.stat{background:var(--card);border-radius:18px;padding:14px 16px;box-shadow:0 4px 14px rgba(0,0,0,.08)}
+.stat .lbl{font-size:13px;color:var(--muted)}
+.stat .val{font-size:26px;font-weight:800;margin-top:2px}
+.stat .val span.u{font-size:14px;font-weight:600;color:var(--muted)}
+.stat.money .val{color:var(--brand)}
+.stat.got .val{color:var(--work)}
+.stat.owe .val{color:var(--wait)}
 
-.card {
-    background: white;
-    border-radius: 15px;
-    padding: 18px;
-    margin-bottom: 15px;
-    box-shadow: 0 3px 12px rgba(0,0,0,0.08);
-}
+.card{background:var(--card);border-radius:20px;padding:16px;margin-top:14px;box-shadow:0 3px 12px rgba(0,0,0,.06)}
+.card h2{margin:0 0 12px;font-size:17px}
 
-.header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
+.cal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.cal-head .m{font-size:18px;font-weight:800}
+.round{width:40px;height:40px;border-radius:50%;background:var(--brand-soft);color:var(--brand);font-size:18px;font-weight:800}
+.wd,.grid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}
+.wd div{text-align:center;font-size:12px;font-weight:700;color:var(--muted);padding:4px 0}
+.wd div:nth-child(6){color:#2563eb}.wd div:nth-child(7){color:var(--off)}
+.cell{position:relative;aspect-ratio:1/1.08;border-radius:12px;border:2px solid var(--line);background:#fff;padding:5px 4px;display:flex;flex-direction:column;align-items:center;justify-content:space-between;cursor:pointer;transition:transform .08s}
+.cell:active{transform:scale(.94)}
+.cell .n{font-size:13px;font-weight:700;align-self:flex-start;padding-left:2px}
+.cell .trip{font-size:15px;font-weight:800;line-height:1}
+.cell .trip small{font-size:10px;font-weight:600;display:block}
+.cell .pd{position:absolute;top:2px;right:3px;font-size:11px;line-height:1}
+.cell.work{background:var(--work-soft);border-color:var(--work);color:#14532d}
+.cell.today{box-shadow:0 0 0 3px var(--brand)}
+.cell.inperiod::after{content:"";position:absolute;left:6px;right:6px;bottom:2px;height:3px;border-radius:3px;background:var(--brand2);opacity:.55}
+.legend{display:flex;gap:12px;flex-wrap:wrap;margin-top:12px;font-size:12px;color:var(--muted)}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:4px;margin-right:4px;vertical-align:-2px}
+.hint{font-size:12px;color:var(--muted);margin-top:8px}
 
-button {
-    border: none;
-    padding: 10px 15px;
-    border-radius: 8px;
-    background: #333;
-    color: white;
-    cursor: pointer;
-    font-size: 15px;
-}
+.pnav{display:flex;gap:10px}
+.pnav button{flex:1;background:var(--brand-soft);color:var(--brand);padding:11px;border-radius:12px;font-weight:700;font-size:15px}
+.ptitle{text-align:center;margin:14px 0 2px;font-size:18px;font-weight:800}
+.pday{text-align:center;color:var(--muted);margin-bottom:14px}
+.rows{border-top:1px dashed var(--line)}
+.row{display:flex;justify-content:space-between;padding:10px 2px;border-bottom:1px dashed var(--line);font-size:16px}
+.row b{font-weight:700}
+.net{margin-top:14px;background:linear-gradient(135deg,var(--brand),var(--brand2));color:#fff;border-radius:16px;padding:16px;text-align:center}
+.net .t{opacity:.9;font-size:14px}.net .v{font-size:34px;font-weight:800}
 
-.month {
-    font-size: 22px;
-    font-weight: bold;
-}
+.paybox{margin-top:14px}
+.paybox .q{font-size:14px;color:var(--muted);text-align:center;margin-bottom:8px}
+.payseg{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.payseg button{padding:16px 8px;border-radius:14px;background:#f5f5f4;font-size:17px;font-weight:800;color:var(--ink);border:2px solid transparent}
+.payseg button.on.paid{background:var(--work-soft);border-color:var(--work);color:#14532d}
+.payseg button.on.unpaid{background:var(--wait-soft);border-color:var(--wait);color:#92400e}
 
-.weekdays,
-.days {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    gap: 5px;
-}
+.set label{display:block;font-size:14px;color:var(--muted);margin-top:4px}
+.set input{width:100%;padding:12px;border:1.5px solid var(--line);border-radius:12px;font-size:17px;margin-top:4px;font-family:inherit}
+.set input:focus{outline:none;border-color:var(--brand2)}
 
-.weekday {
-    text-align: center;
-    font-weight: bold;
-    padding: 10px 0;
-}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;z-index:50;align-items:flex-end;justify-content:center}
+.overlay.show{display:flex}
+.sheet{background:#fff;width:100%;max-width:560px;border-radius:24px 24px 0 0;padding:20px 18px calc(22px + env(safe-area-inset-bottom));animation:up .2s ease-out}
+@keyframes up{from{transform:translateY(40px);opacity:.4}to{transform:none;opacity:1}}
+.sheet h3{margin:0;font-size:20px;text-align:center}
+.sheet .sub{text-align:center;color:var(--muted);font-size:14px;margin:2px 0 6px}
+.badge{display:block;margin:10px auto 0;width:max-content;background:var(--work-soft);color:#14532d;border:2px solid var(--work);padding:8px 18px;border-radius:99px;font-weight:800;font-size:16px}
+#tripBox{margin-top:14px;text-align:center}
+#tripBox .q{font-size:15px;color:var(--muted)}
+.stepper{display:flex;align-items:center;justify-content:center;gap:22px;margin:8px 0}
+.stepper button{width:62px;height:62px;border-radius:50%;background:var(--brand);color:#fff;font-size:32px;font-weight:700}
+.stepper button:disabled{background:#d6d3d1}
+.stepper .num{font-size:56px;font-weight:800;min-width:70px;line-height:1}
+.income{font-size:20px;font-weight:800;color:var(--brand)}
+.chips{display:flex;justify-content:center;gap:8px;margin-top:12px}
+.chips button{background:var(--brand-soft);color:var(--brand);padding:8px 16px;border-radius:99px;font-weight:700;font-size:15px}
+.sheet .actions{display:grid;grid-template-columns:1fr 2fr;gap:10px;margin-top:20px}
+.sheet .clear{background:#f5f5f4;color:var(--muted);padding:14px;border-radius:14px;font-size:16px;font-weight:700}
+.sheet .done{background:var(--brand);color:#fff;padding:14px;border-radius:14px;font-size:17px;font-weight:800}
 
-.day {
-    min-height: 80px;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    padding: 7px;
-    cursor: pointer;
-    background: white;
-}
-
-.day:hover {
-    background: #f0f0f0;
-}
-
-.day-number {
-    font-weight: bold;
-}
-
-.status {
-    margin-top: 8px;
-    text-align: center;
-    font-size: 12px;
-}
-
-.work {
-    background: #e8f5e9;
-    border: 2px solid #66bb6a;
-}
-
-.off {
-    background: #ffebee;
-    border: 2px solid #ef5350;
-}
-
-.leave {
-    background: #fff8e1;
-    border: 2px solid #ffca28;
-}
-
-.ot {
-    background: #e3f2fd;
-    border: 2px solid #42a5f5;
-}
-
-.summary {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 10px;
-}
-
-.summary-box {
-    background: #f5f5f5;
-    padding: 15px;
-    border-radius: 10px;
-}
-
-.value {
-    font-size: 20px;
-    font-weight: bold;
-}
-
-input {
-    width: 100%;
-    padding: 10px;
-    margin-top: 5px;
-    margin-bottom: 10px;
-    border: 1px solid #ccc;
-    border-radius: 7px;
-    font-size: 16px;
-}
-
-.pay-title {
-    text-align: center;
-    font-size: 22px;
-    font-weight: bold;
-}
-
-.pay-period {
-    text-align: center;
-    font-size: 18px;
-    margin: 10px 0;
-}
-
-.payday {
-    text-align: center;
-    font-size: 18px;
-    margin-bottom: 15px;
-}
-
-.nav-buttons {
-    display: flex;
-    justify-content: space-between;
-    gap: 10px;
-}
-
-.nav-buttons button {
-    flex: 1;
-}
-
-.net {
-    font-size: 26px;
-    font-weight: bold;
-    text-align: center;
-    margin-top: 10px;
-}
-
-.insurance-info {
-    margin-top: 15px;
-    padding: 15px;
-    background: #fff8e1;
-    border-radius: 10px;
-    line-height: 1.8;
-}
-
-.login-box {
-    text-align: center;
-    margin-bottom: 15px;
-}
-
-.user-info {
-    text-align: center;
-    margin-bottom: 10px;
-    font-size: 14px;
-}
-
-#app {
-    display: none;
-}
-
-@media(max-width:600px) {
-
-    .container {
-        padding: 8px;
-    }
-
-    .card {
-        padding: 12px;
-    }
-
-    .day {
-        min-height: 65px;
-        font-size: 13px;
-    }
-
-    .status {
-        font-size: 10px;
-    }
-
-    .month {
-        font-size: 18px;
-    }
-
-    .pay-title {
-        font-size: 19px;
-    }
-
-}
-
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#292524;color:#fff;padding:10px 18px;border-radius:99px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .25s;z-index:99}
+.toast.show{opacity:.95}
+@media(max-width:420px){.stat .val{font-size:22px}}
 </style>
 </head>
-
 <body>
 
-<div class="container">
-
-<div class="login-box">
-
-    <button id="loginBtn">
-        🔐 เข้าสู่ระบบด้วย Google
-    </button>
-
-    <button id="logoutBtn" style="display:none;">
-        ออกจากระบบ
-    </button>
-
+<div class="hero">
+  <div class="wrap top">
+    <div>
+      <h1>🚚 สมุดเที่ยววิ่งส่งหมู</h1>
+      <small>ติ๊กวันทำงาน นับเที่ยว เช็กว่าจ่ายเงินแล้วหรือยัง</small>
+    </div>
+    <div class="user-chip" id="userChip" style="display:none">
+      <span id="userName"></span>
+      <button id="logoutBtn">ออก</button>
+    </div>
+  </div>
 </div>
 
-<div id="userInfo" class="user-info"></div>
+<div class="wrap">
 
-<div id="app">
+  <div id="loginView" class="card" style="margin-top:-40px">
+    <div class="big">🐖🚚</div>
+    <h2>ใส่รหัสส่วนตัวของคุณ</h2>
+    <p>ตั้งรหัสเองได้เลย (อย่างน้อย 6 ตัวอักษร) ใส่รหัสเดิมในเครื่องไหนก็เห็นข้อมูลชุดเดียวกัน<br>ไม่ต้องล็อกอิน Google</p>
+    <input id="codeInput" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="เช่น หมูสด-0812345678"
+      style="width:100%;max-width:340px;padding:14px;border:2px solid var(--line);border-radius:14px;font-size:18px;text-align:center;font-family:inherit;margin-bottom:14px">
+    <br>
+    <button class="btn-primary" id="enterBtn">🚚 เข้าใช้งาน</button>
+    <div class="hint" style="margin-top:14px">⚠️ ใครรู้รหัสนี้ก็เปิดดูข้อมูลได้ ตั้งให้เดายากและไม่บอกคนอื่นนะคะ</div>
+  </div>
 
-<h1>📅 ปฏิทินวันทำงาน</h1>
+  <div id="app">
 
-<!-- ปฏิทิน -->
+    <div id="syncWarn" style="display:none;margin:12px 0 -40px;position:relative;z-index:2;background:#fef3c7;color:#92400e;border-radius:12px;padding:10px 14px;font-size:14px;font-weight:700"></div>
+    <div class="stats">
+      <div class="stat"><div class="lbl">เที่ยวเดือนนี้</div><div class="val"><span id="mTrips">0</span> <span class="u">เที่ยว</span></div></div>
+      <div class="stat money"><div class="lbl">รายได้เดือนนี้</div><div class="val"><span id="mIncome">0</span> <span class="u">บาท</span></div></div>
+      <div class="stat got"><div class="lbl">✅ รับเงินแล้ว (ทั้งหมด)</div><div class="val"><span id="totGot">0</span> <span class="u">บาท</span></div></div>
+      <div class="stat owe"><div class="lbl">⏳ ยังไม่ได้รับ (ทั้งหมด)</div><div class="val"><span id="totOwe">0</span> <span class="u">บาท</span></div></div>
+    </div>
 
-<div class="card">
+    <div class="card">
+      <div class="cal-head">
+        <button class="round" id="prevM">◀</button>
+        <div class="m" id="monthTitle"></div>
+        <button class="round" id="nextM">▶</button>
+      </div>
+      <div class="wd"><div>จ</div><div>อ</div><div>พ</div><div>พฤ</div><div>ศ</div><div>ส</div><div>อา</div></div>
+      <div class="grid" id="grid"></div>
+      <div class="legend">
+        <span><i style="background:var(--work)"></i>วันที่ทำงาน (ตัวเลข = เที่ยว)</span>
+        <span>💰 รอบนี้จ่ายแล้ว</span>
+        <span>⏳ รอบนี้ยังไม่จ่าย</span>
+        <span><i style="background:var(--brand2)"></i>รอบเงินที่เลือก</span>
+      </div>
+      <div class="hint">แตะวันที่เพื่อติ๊กว่าทำงาน แล้วกด + / − ปรับจำนวนเที่ยวได้เลย</div>
+    </div>
 
-<div class="header">
+    <div class="card">
+      <h2>💰 สรุปรอบเงิน</h2>
+      <div class="pnav">
+        <button id="prevP">◀ รอบก่อน</button>
+        <button id="nextP">รอบถัดไป ▶</button>
+      </div>
+      <div class="ptitle" id="pTitle"></div>
+      <div class="pday" id="pPay"></div>
 
-<button onclick="changeMonth(-1)">◀</button>
+      <div class="rows">
+        <div class="row"><span>วันที่ทำงาน</span><b><span id="pDays">0</span> วัน</b></div>
+        <div class="row"><span>จำนวนเที่ยว</span><b><span id="pTrips">0</span> เที่ยว</b></div>
+      </div>
 
-<div class="month" id="monthYear"></div>
+      <div class="net">
+        <div class="t">ยอดรอบนี้</div>
+        <div class="v"><span id="pNet">0</span> บาท</div>
+      </div>
 
-<button onclick="changeMonth(1)">▶</button>
+      <div class="paybox">
+        <div class="q">รอบนี้จ่ายเงินแล้วหรือยัง?</div>
+        <div class="payseg" id="paySeg">
+          <button class="paid" data-v="paid">✅ จ่ายแล้ว</button>
+          <button class="unpaid" data-v="unpaid">⏳ ยังไม่จ่าย</button>
+        </div>
+      </div>
+    </div>
 
+    <div class="card set">
+      <h2>⚙️ ตั้งค่า</h2>
+      <label>ค่าเที่ยวละ (บาท)</label>
+      <input type="number" inputmode="numeric" id="tripRate">
+    </div>
+
+  </div>
 </div>
 
-<br>
-
-<div class="weekdays">
-
-<div class="weekday">จ</div>
-<div class="weekday">อ</div>
-<div class="weekday">พ</div>
-<div class="weekday">พฤ</div>
-<div class="weekday">ศ</div>
-<div class="weekday">ส</div>
-<div class="weekday">อา</div>
-
+<div class="overlay" id="overlay">
+  <div class="sheet" id="sheet">
+    <h3 id="shTitle"></h3>
+    <div class="sub" id="shSub"></div>
+    <span class="badge">✅ ทำงาน</span>
+    <div id="tripBox">
+      <div class="q">วันนี้วิ่งกี่เที่ยว?</div>
+      <div class="stepper">
+        <button id="minus">−</button>
+        <div class="num" id="tripNum">1</div>
+        <button id="plus">+</button>
+      </div>
+      <div class="income"><span id="dayIncome">0</span> บาท</div>
+      <div class="chips"><button data-n="1">1</button><button data-n="2">2</button><button data-n="3">3</button><button data-n="4">4</button></div>
+    </div>
+    <div class="actions">
+      <button class="clear" id="clearDay">ไม่ได้ทำงาน (ล้าง)</button>
+      <button class="done" id="doneBtn">เรียบร้อย</button>
+    </div>
+  </div>
 </div>
 
-<div class="days" id="calendar"></div>
-
-</div>
-
-
-<!-- ดูรอบเงิน -->
-
-<div class="card">
-
-<div class="pay-title">
-💰 ดูรอบเงิน
-</div>
-
-<div class="nav-buttons">
-
-<button onclick="changePeriod(-1)">
-◀ รอบก่อน
-</button>
-
-<button onclick="changePeriod(1)">
-รอบถัดไป ▶
-</button>
-
-</div>
-
-<br>
-
-<div class="pay-period" id="payPeriod"></div>
-
-<div class="payday" id="payday"></div>
-
-<div class="summary">
-
-<div class="summary-box">
-วันทำงาน
-<br>
-<span class="value" id="workCount">0</span> วัน
-</div>
-
-<div class="summary-box">
-วันลา
-<br>
-<span class="value" id="leaveCount">0</span> วัน
-</div>
-
-<div class="summary-box">
-OT
-<br>
-<span class="value" id="otCount">0</span> วัน
-</div>
-
-<div class="summary-box">
-ค่าแรง
-<br>
-<span class="value" id="salary">0</span> บาท
-</div>
-
-<div class="summary-box">
-ประกันการทำงาน
-<br>
-<span class="value" id="insurance">0</span> บาท
-</div>
-
-<div class="summary-box">
-ประกันสังคม
-<br>
-<span class="value" id="social">0</span> บาท
-</div>
-
-</div>
-
-<div class="insurance-info">
-
-<b>📌 สถานะประกันการทำงาน</b><br>
-
-จ่ายแล้ว:
-<span id="insurancePaidDisplay">0</span> บาท
-<br>
-
-คงเหลือ:
-<span id="insuranceRemainingDisplay">0</span> บาท
-<br>
-
-จ่ายแล้ว:
-<span id="insurancePeriodDisplay">0</span> รอบ
-
-</div>
-
-<div class="net">
-
-รับสุทธิ
-<br>
-
-<span id="netSalary">0</span> บาท
-
-</div>
-
-</div>
-
-
-<!-- ตั้งค่า -->
-
-<div class="card">
-
-<h2>⚙️ ตั้งค่ารายได้</h2>
-
-<label>
-ค่าแรงต่อวัน
-</label>
-
-<input
-type="number"
-id="dailyRate"
-value="550"
->
-
-<label>
-ประกันการทำงานทั้งหมด
-</label>
-
-<input
-type="number"
-id="insuranceTotal"
-value="6000"
->
-
-<label>
-หักประกันการทำงานต่องวด
-</label>
-
-<input
-type="number"
-id="workInsurance"
-value="150"
->
-
-<label>
-ประกันสังคมต่องวด
-</label>
-
-<input
-type="number"
-id="socialSecurity"
-value="83"
->
-
-</div>
-
-</div>
-
-</div>
-
+<div class="toast" id="toast"></div>
 
 <script type="module">
-
-/* =====================================================
-   FIREBASE
-===================================================== */
-
-import { initializeApp }
-from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
-
-import {
-    getAuth,
-    GoogleAuthProvider,
-    signInWithPopup,
-    signOut,
-    onAuthStateChanged
-}
-from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
-
-import {
-    getFirestore,
-    doc,
-    getDoc,
-    setDoc
-}
-from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
-
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
+import { getFirestore, doc, getDoc, setDoc }
+  from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
 
 const firebaseConfig = {
-
-    apiKey:
-        "AIzaSyCixSYpEEl4oDZG2hGrTOXv51OkfGJD_Xk",
-
-    authDomain:
-        "workcalendar-75997.firebaseapp.com",
-
-    projectId:
-        "workcalendar-75997",
-
-    storageBucket:
-        "workcalendar-75997.firebasestorage.app",
-
-    messagingSenderId:
-        "10110694468",
-
-    appId:
-        "1:10110694468:web:3b1ccb9c35fad5f6517811",
-
-    measurementId:
-        "G-QZCBWQ2JSS"
-
+  apiKey: "AIzaSyCixSYpEEl4oDZG2hGrTOXv51OkfGJD_Xk",
+  authDomain: "workcalendar-75997.firebaseapp.com",
+  projectId: "workcalendar-75997",
+  storageBucket: "workcalendar-75997.firebasestorage.app",
+  messagingSenderId: "10110694468",
+  appId: "1:10110694468:web:3b1ccb9c35fad5f6517811",
+  measurementId: "G-QZCBWQ2JSS"
 };
+const fb = initializeApp(firebaseConfig);
+const db = getFirestore(fb);
 
+/* ---------------- State ---------------- */
+let code = null, docId = null;
+let data = {};            // { "YYYY-MM-DD": { s:"work", t:จำนวนเที่ยว } }
+let paid = {};            // { "YYYY-MM-DD(วันเริ่มรอบ)": "paid" | "unpaid" }
+let settings = { tripRate: 800 };
+let viewDate = new Date(); viewDate.setDate(1);
+let selPeriod = getPeriod(new Date());
+let editKey = null;
+let saveTimer = null, paidTimer = null, setTimer = null;
 
-const appFirebase =
-    initializeApp(firebaseConfig);
+const $ = id => document.getElementById(id);
+const pad = n => String(n).padStart(2, "0");
+const keyOf = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const fromKey = k => { const [y,m,d] = k.split("-").map(Number); return new Date(y, m-1, d); };
+const fmtD = d => `${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()+543}`;
+const fmtN = n => Number(n).toLocaleString("th-TH");
+const MONTHS = ["มกราคม","กุมภาพันธ์","มีนาคม","เมษายน","พฤษภาคม","มิถุนายน","กรกฎาคม","สิงหาคม","กันยายน","ตุลาคม","พฤศจิกายน","ธันวาคม"];
+const DOW = ["อาทิตย์","จันทร์","อังคาร","พุธ","พฤหัสบดี","ศุกร์","เสาร์"];
 
-const auth =
-    getAuth(appFirebase);
+function toast(msg){ const t=$("toast"); t.textContent=msg; t.classList.add("show"); clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove("show"),1800); }
 
-const db =
-    getFirestore(appFirebase);
+/* ---------------- Pay periods ----------------
+   29–5 , 6–14 , 15–21 , 22–28   (เงินออก = วันสิ้นสุดรอบ + 7 วัน) */
+function getPeriod(date){
+  const y = date.getFullYear(), m = date.getMonth(), d = date.getDate();
+  if (d >= 29) return { start:new Date(y,m,29),   end:new Date(y,m+1,5) };
+  if (d <= 5)  return { start:new Date(y,m-1,29), end:new Date(y,m,5) };
+  if (d <= 14) return { start:new Date(y,m,6),    end:new Date(y,m,14) };
+  if (d <= 21) return { start:new Date(y,m,15),   end:new Date(y,m,21) };
+  return { start:new Date(y,m,22), end:new Date(y,m,28) };
+}
+const nextPeriod = p => { const d=new Date(p.end); d.setDate(d.getDate()+1); return getPeriod(d); };
+const prevPeriod = p => { const d=new Date(p.start); d.setDate(d.getDate()-1); return getPeriod(d); };
+const payday = p => { const d=new Date(p.end); d.setDate(d.getDate()+7); return d; };
+const pKey = p => keyOf(p.start);
 
-const provider =
-    new GoogleAuthProvider();
+function periodStats(p){
+  let days=0, trips=0;
+  const d = new Date(p.start);
+  while (d <= p.end){
+    const e = data[keyOf(d)];
+    if (e?.s==="work" && e.t>0){ days++; trips+=e.t; }
+    d.setDate(d.getDate()+1);
+  }
+  return { days, trips };
+}
 
+/* ---------------- Render ---------------- */
+function renderAll(){ renderCalendar(); renderMonthStats(); renderTotals(); renderPeriod(); }
 
-let currentUser = null;
-
-
-/* =====================================================
-   ตัวแปรระบบ
-===================================================== */
-
-let currentDate = new Date();
-
-let data = {};
-
-let settings = {
-
-    dailyRate: 550,
-
-    insuranceTotal: 6000,
-
-    workInsurance: 150,
-
-    socialSecurity: 83
-
-};
-
-
-let selectedPeriodIndex = 0;
-
-
-/* =====================================================
-   LOGIN
-===================================================== */
-
-document
-.getElementById("loginBtn")
-.addEventListener("click", async function() {
-
-    try {
-
-        await signInWithPopup(
-            auth,
-            provider
-        );
-
+function renderCalendar(){
+  const y = viewDate.getFullYear(), m = viewDate.getMonth();
+  $("monthTitle").textContent = `${MONTHS[m]} ${y+543}`;
+  const grid = $("grid"); grid.innerHTML = "";
+  const first = (new Date(y,m,1).getDay()+6)%7;
+  const total = new Date(y,m+1,0).getDate();
+  const todayKey = keyOf(new Date());
+  for (let i=0;i<first;i++) grid.appendChild(document.createElement("div"));
+  for (let d=1; d<=total; d++){
+    const dt = new Date(y,m,d), k = keyOf(dt), e = data[k];
+    const c = document.createElement("div");
+    c.className = "cell";
+    if (e?.s==="work") c.classList.add("work");
+    if (k===todayKey) c.classList.add("today");
+    if (dt>=selPeriod.start && dt<=selPeriod.end) c.classList.add("inperiod");
+    let mid = "", badge = "";
+    if (e?.s==="work"){
+      mid = `<div class="trip">${e.t}<small>เที่ยว</small></div>`;
+      const st = paid[pKey(getPeriod(dt))];
+      if (st==="paid") badge = `<span class="pd">💰</span>`;
+      else if (st==="unpaid") badge = `<span class="pd">⏳</span>`;
     }
-    catch(error) {
+    c.innerHTML = `${badge}<div class="n">${d}</div>${mid}<div></div>`;
+    c.onclick = () => openSheet(k);
+    grid.appendChild(c);
+  }
+}
 
-        console.error(error);
+function renderMonthStats(){
+  const y = viewDate.getFullYear(), m = viewDate.getMonth();
+  let trips = 0;
+  const total = new Date(y,m+1,0).getDate();
+  for (let d=1; d<=total; d++){
+    const e = data[keyOf(new Date(y,m,d))];
+    if (e?.s==="work") trips += e.t;
+  }
+  $("mTrips").textContent = fmtN(trips);
+  $("mIncome").textContent = fmtN(trips*settings.tripRate);
+}
 
-        alert(
-            "เข้าสู่ระบบไม่สำเร็จ\n\n"
-            + error.code
-        );
+/* รวมยอดทุกรอบ: ติ๊กจ่ายแล้ว = รับแล้ว, นอกนั้น = ยังไม่ได้รับ */
+function renderTotals(){
+  const byPeriod = {};
+  for (const k in data){
+    const e = data[k];
+    if (e?.s!=="work" || !(e.t>0)) continue;
+    const pk = pKey(getPeriod(fromKey(k)));
+    byPeriod[pk] = (byPeriod[pk]||0) + e.t;
+  }
+  let got = 0, owe = 0;
+  for (const pk in byPeriod){
+    const amt = byPeriod[pk]*settings.tripRate;
+    if (paid[pk]==="paid") got += amt; else owe += amt;
+  }
+  $("totGot").textContent = fmtN(got);
+  $("totOwe").textContent = fmtN(owe);
+}
 
-    }
+function renderPeriod(){
+  const p = selPeriod, s = periodStats(p);
+  $("pTitle").textContent = `${fmtD(p.start)} – ${fmtD(p.end)}`;
+  $("pPay").textContent = `💵 เงินออกวันที่ ${fmtD(payday(p))}`;
+  $("pDays").textContent = s.days;
+  $("pTrips").textContent = s.trips;
+  $("pNet").textContent = fmtN(s.trips*settings.tripRate);
+  const st = paid[pKey(p)];
+  document.querySelectorAll("#paySeg button").forEach(b=> b.classList.toggle("on", b.dataset.v===st));
+}
 
+$("paySeg").addEventListener("click", ev=>{
+  const b = ev.target.closest("button"); if(!b) return;
+  const k = pKey(selPeriod);
+  if (paid[k]===b.dataset.v) delete paid[k]; else paid[k] = b.dataset.v;   // กดซ้ำ = ยกเลิกการติ๊ก
+  renderAll();
+  clearTimeout(paidTimer); paidTimer = setTimeout(savePaid, 400);
 });
 
+/* ---------------- Day sheet ---------------- */
+function openSheet(k){
+  editKey = k;
+  if (!data[k]){ data[k] = { s:"work", t:1 }; renderAll(); queueSave(); }   // แตะ = ติ๊กวันทำงาน 1 เที่ยว
+  const d = fromKey(k);
+  $("shTitle").textContent = `วัน${DOW[d.getDay()]}ที่ ${d.getDate()} ${MONTHS[d.getMonth()]}`;
+  $("shSub").textContent = `พ.ศ. ${d.getFullYear()+543}`;
+  syncSheet();
+  $("overlay").classList.add("show");
+}
+function closeSheet(){ $("overlay").classList.remove("show"); editKey = null; }
 
-/* =====================================================
-   LOGOUT
-===================================================== */
+function syncSheet(){
+  const e = data[editKey]; if(!e) return;
+  $("tripNum").textContent = e.t;
+  $("dayIncome").textContent = fmtN(e.t*settings.tripRate);
+  $("minus").disabled = e.t<=1;
+}
+function setTrips(n){
+  n = Math.max(1, Math.min(30, n));
+  data[editKey] = { s:"work", t:n };
+  syncSheet(); renderAll(); queueSave();
+}
+$("plus").onclick  = ()=> setTrips((data[editKey]?.t||0)+1);
+$("minus").onclick = ()=> setTrips((data[editKey]?.t||1)-1);
+document.querySelector(".chips").addEventListener("click", ev=>{ const b=ev.target.closest("button"); if(b) setTrips(Number(b.dataset.n)); });
+$("clearDay").onclick = ()=>{ delete data[editKey]; closeSheet(); renderAll(); queueSave(); };
+$("doneBtn").onclick = closeSheet;
+$("overlay").addEventListener("click", ev=>{ if(ev.target.id==="overlay") closeSheet(); });
 
-document
-.getElementById("logoutBtn")
-.addEventListener("click", async function() {
+/* ---------------- Navigation ---------------- */
+function shiftMonth(n){
+  viewDate = new Date(viewDate.getFullYear(), viewDate.getMonth()+n, 1);
+  const now = new Date();
+  selPeriod = (viewDate.getFullYear()===now.getFullYear() && viewDate.getMonth()===now.getMonth())
+    ? getPeriod(now) : getPeriod(new Date(viewDate.getFullYear(), viewDate.getMonth(), 15));
+  renderAll();
+}
+$("prevM").onclick = ()=>shiftMonth(-1);
+$("nextM").onclick = ()=>shiftMonth(1);
+$("prevP").onclick = ()=>{ selPeriod = prevPeriod(selPeriod); renderAll(); };
+$("nextP").onclick = ()=>{ selPeriod = nextPeriod(selPeriod); renderAll(); };
 
-    await signOut(auth);
-
+/* ---------------- Settings ---------------- */
+function fillSettings(){ $("tripRate").value = settings.tripRate; }
+$("tripRate").addEventListener("input", ()=>{
+  settings.tripRate = Number($("tripRate").value) || 0;
+  renderAll();
+  clearTimeout(setTimer); setTimer = setTimeout(saveSettings, 600);
 });
 
-
-/* =====================================================
-   PATH FIRESTORE
-===================================================== */
-
-function userDoc(path) {
-
-    return doc(
-        db,
-        "users",
-        currentUser.uid,
-        ...path.split("/")
-    );
-
+/* ---------------- Storage (รหัสส่วนตัว) ----------------
+   เก็บที่ Firestore: porkLogs/{SHA-256 ของรหัส}  (ไม่เก็บรหัสจริง)
+   และสำรองไว้ในเครื่องนี้ด้วยเสมอ */
+const ls = {
+  get(k, fb){ try{ const v = JSON.parse(localStorage.getItem(k)); return v ?? fb; }catch(e){ return fb; } },
+  set(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
+};
+async function hashCode(c){
+  if (!(window.crypto && crypto.subtle)){ alert("เบราว์เซอร์นี้ไม่รองรับ กรุณาเปิดผ่านเว็บ https"); throw new Error("no-subtle"); }
+  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode("pork|" + c));
+  return [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,"0")).join("");
+}
+const docRef = () => doc(db, "porkLogs", docId);
+function applyBlob(b){
+  data = b.data || {}; paid = b.paid || {};
+  settings = { ...settings, ...(b.settings || {}) };
+}
+function setSync(ok, why){
+  const w = $("syncWarn");
+  if (ok){ w.style.display = "none"; return; }
+  w.style.display = "block";
+  w.textContent = "⚠️ ยังบันทึกขึ้นออนไลน์ไม่ได้ (" + (why||"ไม่ทราบสาเหตุ") + ") ตอนนี้เก็บไว้ในเครื่องนี้ก่อน";
+}
+function showApp(){
+  $("loginView").style.display = "none";
+  $("app").style.display = "block";
+  $("userChip").style.display = "flex";
+  $("userName").textContent = "🔑 รหัสของฉัน";
 }
 
-
-/* =====================================================
-   โหลดข้อมูลจาก FIRESTORE
-===================================================== */
-
-async function loadCloudData() {
-
-    try {
-
-        const calendarSnap =
-            await getDoc(
-                userDoc("calendar/data")
-            );
-
-        if (calendarSnap.exists()) {
-
-            data =
-                calendarSnap.data().data || {};
-
-        }
-
-        const settingsSnap =
-            await getDoc(
-                userDoc("settings/config")
-            );
-
-        if (settingsSnap.exists()) {
-
-            settings =
-                {
-                    ...settings,
-                    ...settingsSnap.data().settings
-                };
-
-        }
-
-        loadSettings();
-
-        renderCalendar();
-
-        updatePayPeriod();
-
-    }
-
-    catch(error) {
-
-        console.error(
-            "LOAD ERROR:",
-            error
-        );
-
-        alert(
-            "โหลดข้อมูลไม่สำเร็จ\n\n"
-            + error.code
-        );
-
-    }
-
+async function openWithCode(c){
+  c = c.trim();
+  if (c.length < 6){ alert("รหัสต้องมีอย่างน้อย 6 ตัวอักษรนะคะ"); return; }
+  code = c; docId = await hashCode(code);
+  ls.set("porkCode", code);
+  showApp();
+  const cached = ls.get("porkCache_" + docId, null);
+  if (cached) applyBlob(cached);
+  fillSettings(); selPeriod = getPeriod(new Date()); renderAll();
+  try{
+    const snap = await getDoc(docRef());
+    if (snap.exists()) applyBlob(snap.data());
+    else if (cached) await persist();
+    setSync(true);
+  }catch(err){ console.error(err); setSync(false, err.code || err.message); }
+  fillSettings(); selPeriod = getPeriod(new Date()); renderAll();
 }
 
-
-/* =====================================================
-   บันทึกข้อมูลลง FIRESTORE
-===================================================== */
-
-async function saveData() {
-
-    if (!currentUser) {
-
-        return;
-
-    }
-
-    try {
-
-        await setDoc(
-
-            userDoc("calendar/data"),
-
-            {
-                data: data
-            },
-
-            {
-                merge: true
-            }
-
-        );
-
-        console.log(
-            "บันทึกข้อมูลปฏิทินสำเร็จ"
-        );
-
-    }
-
-    catch(error) {
-
-        console.error(
-            "SAVE ERROR:",
-            error
-        );
-
-        alert(
-            "บันทึกข้อมูลไม่สำเร็จ\n\n"
-            + error.code
-        );
-
-    }
-
+async function persist(){
+  if (!docId) return;
+  const blob = { data, paid, settings, updated: Date.now() };
+  ls.set("porkCache_" + docId, blob);
+  try{ await setDoc(docRef(), blob); toast("บันทึกแล้ว ✓"); setSync(true); }
+  catch(err){ console.error(err); setSync(false, err.code || err.message); }
 }
-
-
-/* =====================================================
-   บันทึก SETTINGS
-===================================================== */
-
-async function saveSettings() {
-
-    settings.dailyRate =
-        Number(
-            document
-            .getElementById("dailyRate")
-            .value
-        );
-
-    settings.insuranceTotal =
-        Number(
-            document
-            .getElementById("insuranceTotal")
-            .value
-        );
-
-    settings.workInsurance =
-        Number(
-            document
-            .getElementById("workInsurance")
-            .value
-        );
-
-    settings.socialSecurity =
-        Number(
-            document
-            .getElementById("socialSecurity")
-            .value
-        );
-
-
-    if (!currentUser) {
-
-        return;
-
-    }
-
-
-    try {
-
-        await setDoc(
-
-            userDoc("settings/config"),
-
-            {
-                settings: settings
-            },
-
-            {
-                merge: true
-            }
-
-        );
-
-    }
-
-    catch(error) {
-
-        console.error(
-            "SETTING SAVE ERROR:",
-            error
-        );
-
-    }
-
-}
-
-
-/* =====================================================
-   LOAD SETTINGS
-===================================================== */
-
-function loadSettings() {
-
-    document
-    .getElementById("dailyRate")
-    .value =
-        settings.dailyRate;
-
-    document
-    .getElementById("insuranceTotal")
-    .value =
-        settings.insuranceTotal;
-
-    document
-    .getElementById("workInsurance")
-    .value =
-        settings.workInsurance;
-
-    document
-    .getElementById("socialSecurity")
-    .value =
-        settings.socialSecurity;
-
-}
-
-
-/* =====================================================
-   รอบเงิน
-===================================================== */
-
-function getPeriodFromDate(date) {
-
-    let d = new Date(date);
-
-    let day = d.getDate();
-
-    let year = d.getFullYear();
-
-    let month = d.getMonth();
-
-
-    if (day >= 29) {
-
-        return {
-
-            start:
-                new Date(
-                    year,
-                    month,
-                    29
-                ),
-
-            end:
-                new Date(
-                    year,
-                    month + 1,
-                    5
-                )
-
-        };
-
-    }
-
-
-    if (day <= 5) {
-
-        return {
-
-            start:
-                new Date(
-                    year,
-                    month - 1,
-                    29
-                ),
-
-            end:
-                new Date(
-                    year,
-                    month,
-                    5
-                )
-
-        };
-
-    }
-
-
-    if (day >= 6 && day <= 7) {
-
-        return {
-
-            start:
-                new Date(
-                    year,
-                    month,
-                    6
-                ),
-
-            end:
-                new Date(
-                    year,
-                    month,
-                    12
-                )
-
-        };
-
-    }
-
-
-    if (day >= 8 && day <= 14) {
-
-        return {
-
-            start:
-                new Date(
-                    year,
-                    month,
-                    8
-                ),
-
-            end:
-                new Date(
-                    year,
-                    month,
-                    14
-                )
-
-        };
-
-    }
-
-
-    if (day >= 15 && day <= 21) {
-
-        return {
-
-            start:
-                new Date(
-                    year,
-                    month,
-                    15
-                ),
-
-            end:
-                new Date(
-                    year,
-                    month,
-                    21
-                )
-
-        };
-
-    }
-
-
-    if (day >= 22 && day <= 28) {
-
-        return {
-
-            start:
-                new Date(
-                    year,
-                    month,
-                    22
-                ),
-
-            end:
-                new Date(
-                    year,
-                    month,
-                    28
-                )
-
-        };
-
-    }
-
-
-    return {
-
-        start:
-            new Date(
-                year,
-                month,
-                13
-            ),
-
-        end:
-            new Date(
-                year,
-                month,
-                19
-            )
-
-    };
-
-}
-
-
-/* =====================================================
-   วันเงินออก
-===================================================== */
-
-function getPayday(endDate) {
-
-    let payday =
-        new Date(endDate);
-
-    payday.setDate(
-        payday.getDate() + 7
-    );
-
-    return payday;
-
-}
-
-
-/* =====================================================
-   FORMAT DATE
-===================================================== */
-
-function formatDate(date) {
-
-    return date.getDate()
-        + "/"
-        + (date.getMonth() + 1)
-        + "/"
-        + (date.getFullYear() + 543);
-
-}
-
-
-/* =====================================================
-   KEY
-===================================================== */
-
-function getKey(date) {
-
-    return date.getFullYear()
-        + "-"
-        + (date.getMonth() + 1)
-        + "-"
-        + date.getDate();
-
-}
-
-
-/* =====================================================
-   MOVE PERIOD
-===================================================== */
-
-function movePeriod(
-    period,
-    direction
-) {
-
-    let newDate =
-        new Date(period.start);
-
-    newDate.setDate(
-        newDate.getDate()
-        + (direction * 7)
-    );
-
-    return getPeriodFromDate(
-        newDate
-    );
-
-}
-
-
-/* =====================================================
-   PAID INSURANCE
-===================================================== */
-
-function getPaidInsurancePeriods() {
-
-    const today =
-        new Date();
-
-    today.setHours(
-        0, 0, 0, 0
-    );
-
-
-    let currentPeriod =
-        getPeriodFromDate(today);
-
-
-    let count = 0;
-
-
-    let period =
-        new Date(
-            currentPeriod.start
-        );
-
-
-    for (
-        let i = 0;
-        i < 200;
-        i++
-    ) {
-
-        let p =
-            getPeriodFromDate(
-                period
-            );
-
-
-        let payday =
-            getPayday(
-                p.end
-            );
-
-
-        payday.setHours(
-            0, 0, 0, 0
-        );
-
-
-        if (
-            payday <= today
-        ) {
-
-            count++;
-
-        }
-
-
-        period.setDate(
-            period.getDate() - 7
-        );
-
-    }
-
-
-    return count;
-
-}
-
-
-/* =====================================================
-   RENDER CALENDAR
-===================================================== */
-
-function renderCalendar() {
-
-    const calendar =
-        document.getElementById(
-            "calendar"
-        );
-
-    calendar.innerHTML = "";
-
-
-    const year =
-        currentDate.getFullYear();
-
-    const month =
-        currentDate.getMonth();
-
-
-    const firstDay =
-        new Date(
-            year,
-            month,
-            1
-        );
-
-
-    const lastDay =
-        new Date(
-            year,
-            month + 1,
-            0
-        );
-
-
-    const startDay =
-        (
-            firstDay.getDay()
-            + 6
-        ) % 7;
-
-
-    const daysInMonth =
-        lastDay.getDate();
-
-
-    const months = [
-
-        "มกราคม",
-        "กุมภาพันธ์",
-        "มีนาคม",
-        "เมษายน",
-        "พฤษภาคม",
-        "มิถุนายน",
-        "กรกฎาคม",
-        "สิงหาคม",
-        "กันยายน",
-        "ตุลาคม",
-        "พฤศจิกายน",
-        "ธันวาคม"
-
-    ];
-
-
-    document
-    .getElementById(
-        "monthYear"
-    )
-    .innerText =
-
-        months[month]
-        + " "
-        + (year + 543);
-
-
-    for (
-        let i = 0;
-        i < startDay;
-        i++
-    ) {
-
-        calendar.appendChild(
-            document.createElement(
-                "div"
-            )
-        );
-
-    }
-
-
-    for (
-        let day = 1;
-        day <= daysInMonth;
-        day++
-    ) {
-
-        const key =
-            year
-            + "-"
-            + (month + 1)
-            + "-"
-            + day;
-
-
-        const cell =
-            document.createElement(
-                "div"
-            );
-
-
-        cell.className =
-            "day";
-
-
-        const status =
-            data[key];
-
-
-        if (status === 0)
-            cell.classList.add(
-                "work"
-            );
-
-        if (status === 1)
-            cell.classList.add(
-                "off"
-            );
-
-        if (status === 2)
-            cell.classList.add(
-                "leave"
-            );
-
-        if (status === 3)
-            cell.classList.add(
-                "ot"
-            );
-
-
-        let text = "";
-
-
-        if (status === 0)
-            text = "✓ ทำงาน";
-
-        if (status === 1)
-            text = "✕ หยุด";
-
-        if (status === 2)
-            text = "ลา";
-
-        if (status === 3)
-            text = "OT";
-
-
-        cell.innerHTML =
-
-            `<div class="day-number">
-                ${day}
-            </div>
-
-            <div class="status">
-                ${text}
-            </div>`;
-
-
-        cell.onclick =
-            async function() {
-
-                if (
-                    data[key]
-                    === undefined
-                ) {
-
-                    data[key] = 0;
-
-                }
-
-                else {
-
-                    data[key]++;
-
-                    if (
-                        data[key] > 3
-                    ) {
-
-                        delete data[key];
-
-                    }
-
-                }
-
-
-                renderCalendar();
-
-                updatePayPeriod();
-
-                await saveData();
-
-            };
-
-
-        calendar.appendChild(
-            cell
-        );
-
-    }
-
-}
-
-
-/* =====================================================
-   UPDATE PAY PERIOD
-===================================================== */
-
-function updatePayPeriod() {
-
-    let baseDate =
-        new Date(
-            currentDate
-        );
-
-
-    let period =
-        getPeriodFromDate(
-            baseDate
-        );
-
-
-    for (
-        let i = 0;
-        i < Math.abs(
-            selectedPeriodIndex
-        );
-        i++
-    ) {
-
-        period =
-            movePeriod(
-
-                period,
-
-                selectedPeriodIndex > 0
-                    ? 1
-                    : -1
-
-            );
-
-    }
-
-
-    const payday =
-        getPayday(
-            period.end
-        );
-
-
-    let workCount = 0;
-
-    let leaveCount = 0;
-
-    let otCount = 0;
-
-
-    let date =
-        new Date(
-            period.start
-        );
-
-
-    while (
-        date <= period.end
-    ) {
-
-        const key =
-            getKey(date);
-
-
-        if (
-            data[key] === 0
-        )
-            workCount++;
-
-
-        if (
-            data[key] === 2
-        )
-            leaveCount++;
-
-
-        if (
-            data[key] === 3
-        )
-            otCount++;
-
-
-        date.setDate(
-            date.getDate() + 1
-        );
-
-    }
-
-
-    const salary =
-        workCount
-        * settings.dailyRate;
-
-
-    const paidPeriods =
-        getPaidInsurancePeriods();
-
-
-    const alreadyPaid =
-        Math.min(
-
-            settings.insuranceTotal,
-
-            paidPeriods
-            * settings.workInsurance
-
-        );
-
-
-    const remaining =
-        Math.max(
-
-            0,
-
-            settings.insuranceTotal
-            - alreadyPaid
-
-        );
-
-
-    let insuranceDeduct = 0;
-
-
-    const today =
-        new Date();
-
-    today.setHours(
-        0, 0, 0, 0
-    );
-
-
-    const paydayCheck =
-        new Date(payday);
-
-    paydayCheck.setHours(
-        0, 0, 0, 0
-    );
-
-
-    if (
-
-        paydayCheck <= today
-
-        &&
-
-        workCount > 0
-
-        &&
-
-        remaining > 0
-
-    ) {
-
-        insuranceDeduct =
-            Math.min(
-
-                settings.workInsurance,
-
-                remaining
-
-            );
-
-    }
-
-
-    const social =
-        workCount > 0
-            ? settings.socialSecurity
-            : 0;
-
-
-    const net =
-        salary
-        - insuranceDeduct
-        - social;
-
-
-    document
-    .getElementById(
-        "payPeriod"
-    )
-    .innerHTML =
-
-        "📅 รอบวันที่ <b>"
-        + formatDate(
-            period.start
-        )
-        + " – "
-        + formatDate(
-            period.end
-        )
-        + "</b>";
-
-
-    document
-    .getElementById(
-        "payday"
-    )
-    .innerHTML =
-
-        "💵 เงินออกวันที่ <b>"
-        + formatDate(
-            payday
-        )
-        + "</b>";
-
-
-    document
-    .getElementById(
-        "workCount"
-    )
-    .innerText =
-        workCount;
-
-
-    document
-    .getElementById(
-        "leaveCount"
-    )
-    .innerText =
-        leaveCount;
-
-
-    document
-    .getElementById(
-        "otCount"
-    )
-    .innerText =
-        otCount;
-
-
-    document
-    .getElementById(
-        "salary"
-    )
-    .innerText =
-        salary.toLocaleString();
-
-
-    document
-    .getElementById(
-        "insurance"
-    )
-    .innerText =
-        "-"
-        + insuranceDeduct.toLocaleString();
-
-
-    document
-    .getElementById(
-        "social"
-    )
-    .innerText =
-        "-"
-        + social.toLocaleString();
-
-
-    document
-    .getElementById(
-        "netSalary"
-    )
-    .innerText =
-        net.toLocaleString();
-
-
-    document
-    .getElementById(
-        "insurancePaidDisplay"
-    )
-    .innerText =
-        alreadyPaid.toLocaleString();
-
-
-    document
-    .getElementById(
-        "insuranceRemainingDisplay"
-    )
-    .innerText =
-        remaining.toLocaleString();
-
-
-    document
-    .getElementById(
-        "insurancePeriodDisplay"
-    )
-    .innerText =
-        settings.workInsurance > 0
-            ? Math.floor(
-                alreadyPaid
-                / settings.workInsurance
-            )
-            : 0;
-
-}
-
-
-/* =====================================================
-   CHANGE PERIOD
-===================================================== */
-
-window.changePeriod =
-function(direction) {
-
-    selectedPeriodIndex +=
-        direction;
-
-    updatePayPeriod();
-
+function queueSave(){ clearTimeout(saveTimer); saveTimer = setTimeout(persist, 500); }
+const savePaid = persist, saveSettings = persist;
+
+/* ---------------- Enter / Exit ---------------- */
+$("enterBtn").onclick = ()=> openWithCode($("codeInput").value);
+$("codeInput").addEventListener("keydown", ev=>{ if(ev.key==="Enter") openWithCode($("codeInput").value); });
+$("logoutBtn").textContent = "เปลี่ยนรหัส";
+$("logoutBtn").onclick = ()=>{
+  if(!confirm("ออกจากรหัสนี้ใช่ไหมคะ? (ข้อมูลยังอยู่ ใส่รหัสเดิมก็กลับมาเห็น)")) return;
+  try{ localStorage.removeItem("porkCode"); }catch(e){}
+  code = docId = null; data = {}; paid = {};
+  $("app").style.display = "none"; $("userChip").style.display = "none";
+  $("loginView").style.display = "block"; $("codeInput").value = "";
 };
 
-
-/* =====================================================
-   CHANGE MONTH
-===================================================== */
-
-window.changeMonth =
-function(amount) {
-
-    currentDate.setMonth(
-        currentDate.getMonth()
-        + amount
-    );
-
-
-    selectedPeriodIndex = 0;
-
-
-    renderCalendar();
-
-    updatePayPeriod();
-
-};
-
-
-/* =====================================================
-   SETTINGS EVENT
-===================================================== */
-
-document
-.getElementById("dailyRate")
-.addEventListener(
-    "input",
-    async function() {
-
-        await saveSettings();
-
-        updatePayPeriod();
-
-    }
-);
-
-
-document
-.getElementById("insuranceTotal")
-.addEventListener(
-    "input",
-    async function() {
-
-        await saveSettings();
-
-        updatePayPeriod();
-
-    }
-);
-
-
-document
-.getElementById("workInsurance")
-.addEventListener(
-    "input",
-    async function() {
-
-        await saveSettings();
-
-        updatePayPeriod();
-
-    }
-);
-
-
-document
-.getElementById("socialSecurity")
-.addEventListener(
-    "input",
-    async function() {
-
-        await saveSettings();
-
-        updatePayPeriod();
-
-    }
-);
-
-
-/* =====================================================
-   AUTH STATE
-===================================================== */
-
-onAuthStateChanged(
-    auth,
-    async function(user) {
-
-        currentUser = user;
-
-
-        if (user) {
-
-            document
-            .getElementById(
-                "loginBtn"
-            )
-            .style.display =
-                "none";
-
-
-            document
-            .getElementById(
-                "logoutBtn"
-            )
-            .style.display =
-                "inline-block";
-
-
-            document
-            .getElementById(
-                "userInfo"
-            )
-            .innerText =
-                "👤 "
-                + (
-                    user.displayName
-                    || user.email
-                );
-
-
-            document
-            .getElementById(
-                "app"
-            )
-            .style.display =
-                "block";
-
-
-            await loadCloudData();
-
-        }
-
-        else {
-
-            document
-            .getElementById(
-                "loginBtn"
-            )
-            .style.display =
-                "inline-block";
-
-
-            document
-            .getElementById(
-                "logoutBtn"
-            )
-            .style.display =
-                "none";
-
-
-            document
-            .getElementById(
-                "userInfo"
-            )
-            .innerText = "";
-
-
-            document
-            .getElementById(
-                "app"
-            )
-            .style.display =
-                "none";
-
-        }
-
-    }
-);
-
+const savedCode = ls.get("porkCode", null);
+if (savedCode) openWithCode(savedCode);
 </script>
-
 </body>
 </html>
-
